@@ -1,0 +1,12 @@
+[package]
+name = "voxel-animator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = "0.4.26"
+glam = "0.24.1"
+rend3 = "0.3.0"
+rend3-egui = "0.3.0"
+rend3-framework = "0.3.0"
+rend3-routine = "0.3.0"
