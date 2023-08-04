@@ -1,3 +1,7 @@
+use glam::Vec4Swizzles;
+
+use crate::graphics::vertex::Vertex;
+
 #[test]
 fn layer() {
     let filled = crate::models::voxel::Voxel {
@@ -151,26 +155,64 @@ fn layer() {
         };
 
         println!("{:?}", layer);
-        assert_eq!(layer2, layer.get_outer());   
+        assert_eq!(layer2, layer.get_outer());
     }
 }
 
 #[test]
-fn log() {
-    super::logging::log("info", super::logging::LogLevel::INFO);
-    super::logging::log("warning", super::logging::LogLevel::WARNING);
-    super::logging::log("error", super::logging::LogLevel::ERROR);
-    super::logging::log("fatal", super::logging::LogLevel::FATAL);
-    assert_eq!(
-        super::logging::get_logs(),
-        vec![
-            (crate::utils::logging::LogLevel::INFO, "info".to_string()),
-            (
-                crate::utils::logging::LogLevel::WARNING,
-                "warning".to_string()
-            ),
-            (crate::utils::logging::LogLevel::ERROR, "error".to_string()),
-            (crate::utils::logging::LogLevel::FATAL, "fatal".to_string())
-        ]
+fn matrix_application_translation() {
+    let mut vertex = Vertex {
+        pos: [3., 7., 1.],
+        color: [1., 1., 1., 1.],
+    };
+    let matrix = glam::mat4(
+        glam::vec4(1., 0., 0., 0.),
+        glam::vec4(0., 1., 0., 0.),
+        glam::vec4(0., 0., 1., 0.),
+        glam::vec4(3., 4., 1., 0.),
     );
+
+    let pos = [vertex.pos[0], vertex.pos[1], vertex.pos[2], 1.];
+    let out = matrix.mul_vec4(pos.into());
+
+    assert_eq!(out.xyz().to_array(), [6., 11., 2.])
+}
+
+#[test]
+fn matrix_application_scaling() {
+    let mut vertex = Vertex {
+        pos: [3., 7., 1.],
+        color: [1., 1., 1., 1.],
+    };
+    let matrix = glam::mat4(
+        glam::vec4(6., 0., 0., 0.),
+        glam::vec4(0., 2., 0., 0.),
+        glam::vec4(0., 0., 4., 0.),
+        glam::vec4(0., 0., 0., 0.),
+    );
+
+    let pos = [vertex.pos[0], vertex.pos[1], vertex.pos[2], 1.];
+    let out = matrix.mul_vec4(pos.into());
+
+    assert_eq!(out.xyz().to_array(), [18., 14., 4.])
+}
+
+#[test]
+fn matrix_application_rotation() {
+    let vertex = Vertex {
+        pos: [3., 7., 1.],
+        color: [1., 1., 1., 1.],
+    };
+    let angle: f32 = 30.0;
+    let matrix = glam::mat4(
+        glam::vec4(1.0, 0.0, 0.0, 0.0),
+        glam::vec4(0.0, angle.cos(), angle.sin(), 0.0),
+        glam::vec4(0.0, -angle.sin(), angle.cos(), 0.0),
+        glam::vec4(0.0, 0.0, 0.0, 1.0),
+    );
+
+    let pos = [vertex.pos[0], vertex.pos[1], vertex.pos[2], 1.];
+    let out = matrix.mul_vec4(pos.into());
+
+    println!("{:?}", out)
 }

@@ -5,8 +5,12 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.26"
+winit = "0.28"
+env_logger = "0.10"
+log = "0.4"
+wgpu = "0.17.0"
+pollster = "0.3.0"
+bytemuck = { version = "1.13.1", features = ["derive"] }
 glam = "0.24.1"
-rend3 = "0.3.0"
-rend3-egui = "0.3.0"
-rend3-framework = "0.3.0"
-rend3-routine = "0.3.0"
+cgmath = "0.18.0"
+anyhow = "1.0.72"
