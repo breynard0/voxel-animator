@@ -1,10 +1,10 @@
+pub mod cam;
 pub mod init;
 pub mod input;
 pub mod msaa;
 pub mod render;
 pub mod vertex;
 pub mod wgpu_object;
-pub mod cam;
 
 use winit::{
     event::*,

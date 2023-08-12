@@ -1,7 +1,7 @@
 use winit::window::Window;
 
 use super::{
-    cam,
+    cam, init,
     vertex::{self, Vertex},
 };
 
@@ -23,11 +23,11 @@ pub struct WgpuObject {
     pub cam_bind_group: wgpu::BindGroup,
     pub msaa_buffer: wgpu::TextureView,
     pub rotation: glam::Vec3,
-    // pub rpass_bundle: wgpu::RenderBundle,
+    pub msaa_bundle: wgpu::RenderBundle,
 }
 
 impl WgpuObject {
-    pub const SAMPLE_COUNT: u32 = 1;
+    pub const SAMPLE_COUNT: u32 = 8;
 
     pub fn window(&self) -> &Window {
         &self.window
@@ -40,7 +40,7 @@ impl WgpuObject {
         if self.rotation.x >= 360.0 {
             self.rotation.x = 0.0;
         }
-        self.vertex_buffer = vertex::new_vbo(&self.device, self.rotation)
+        // self.vertex_buffer = vertex::new_vbo(&self.device, self.rotation)
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {

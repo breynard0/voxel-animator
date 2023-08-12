@@ -1,3 +1,7 @@
+use wgpu::RenderBundleEncoder;
+
+use super::wgpu_object::WgpuObject;
+
 pub fn create_multisampled_framebuffer(
     device: &wgpu::Device,
     config: &wgpu::SurfaceConfiguration,
@@ -25,53 +29,28 @@ pub fn create_multisampled_framebuffer(
         .create_view(&wgpu::TextureViewDescriptor::default())
 }
 
-fn create_bundle(
+pub fn create_bundle(
     device: &wgpu::Device,
     config: &wgpu::SurfaceConfiguration,
-    shader: &wgpu::ShaderModule,
-    pipeline_layout: &wgpu::PipelineLayout,
-    sample_count: u32,
+    pipeline: &wgpu::RenderPipeline,
     vertex_buffer: &wgpu::Buffer,
-    vertex_layout: &wgpu::VertexBufferLayout,
-    vertex_count: u32,
+    vertex_buffer_size: u32,
 ) -> wgpu::RenderBundle {
-    log::info!("sample_count: {}", sample_count);
-    let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: None,
-        layout: Some(pipeline_layout),
-        vertex: wgpu::VertexState {
-            module: shader,
-            entry_point: "vs_main",
-            buffers: &[vertex_layout.clone()],
-        },
-        fragment: Some(wgpu::FragmentState {
-            module: shader,
-            entry_point: "fs_main",
-            targets: &[Some(config.view_formats[0].into())],
-        }),
-        primitive: wgpu::PrimitiveState {
-            topology: wgpu::PrimitiveTopology::LineList,
-            front_face: wgpu::FrontFace::Ccw,
-            ..Default::default()
-        },
-        depth_stencil: None,
-        multisample: wgpu::MultisampleState {
-            count: sample_count,
-            ..Default::default()
-        },
-        multiview: None,
-    });
     let mut encoder = device.create_render_bundle_encoder(&wgpu::RenderBundleEncoderDescriptor {
         label: None,
         color_formats: &[Some(config.view_formats[0])],
         depth_stencil: None,
-        sample_count,
+        sample_count: WgpuObject::SAMPLE_COUNT,
         multiview: None,
     });
     encoder.set_pipeline(&pipeline);
     encoder.set_vertex_buffer(0, vertex_buffer.slice(..));
-    encoder.draw(0..vertex_count, 0..1);
+    encoder.draw(0..vertex_buffer_size, 0..1);
     encoder.finish(&wgpu::RenderBundleDescriptor {
-        label: Some("main"),
+        label: Some("MSAA Render Bundle"),
     })
 }
+
+// pub fn update_bundle_vbo(
+//     encoder: &mut RenderBundleEncoder<'_>
+// )

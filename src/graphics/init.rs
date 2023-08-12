@@ -1,6 +1,6 @@
 use wgpu::{
-    util::DeviceExt, Backends, BindGroupDescriptor, BindGroupLayout, Features, FragmentState,
-    Limits, TextureFormat, VertexState,
+    util::DeviceExt, Backends, BindGroupDescriptor, Features, FragmentState, Limits, TextureFormat,
+    VertexState,
 };
 
 use super::{cam, msaa, vertex, wgpu_object::WgpuObject};
@@ -41,7 +41,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         .formats
         .iter()
         .copied()
-        .find(|f| f.is_srgb() && f == &TextureFormat::Bgra8UnormSrgb)
+        .find(|f| f.is_srgb() && f == &TextureFormat::Rgba8UnormSrgb)
         .unwrap_or(surface_caps.formats[0]);
 
     let config = wgpu::SurfaceConfiguration {
@@ -53,6 +53,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         alpha_mode: surface_caps.alpha_modes[0],
         view_formats: vec![surface_format],
     };
+
     surface.configure(&device, &config);
 
     let shader = device.create_shader_module(wgpu::include_wgsl!("./shaders/main.wgsl"));
@@ -78,36 +79,33 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
 
-    let camera_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        label: Some("CamBindGroup"),
-        entries: &[wgpu::BindGroupLayoutEntry {
-            binding: 0,
-            visibility: wgpu::ShaderStages::VERTEX,
-            ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Uniform,
-                has_dynamic_offset: false,
-                min_binding_size: None,
-            },
-            count: None,
-        }],
-    });
+    let camera_bind_group_layout =
+        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("CamBindGroup"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }],
+        });
 
     let cam_bind_group = device.create_bind_group(&BindGroupDescriptor {
         label: Some("CamBindGroup"),
         layout: &camera_bind_group_layout,
-        entries: &[
-            wgpu::BindGroupEntry {
-                binding: 0,
-                resource: camera_buffer.as_entire_binding(),
-            }
-        ],
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: camera_buffer.as_entire_binding(),
+        }],
     });
 
     let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("RenderPipelineLayout"),
-        bind_group_layouts: &[
-            &camera_bind_group_layout,
-        ],
+        bind_group_layouts: &[&camera_bind_group_layout],
         push_constant_ranges: &[],
     });
 
@@ -146,6 +144,14 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
     let msaa_buffer =
         msaa::create_multisampled_framebuffer(&device, &config, WgpuObject::SAMPLE_COUNT);
 
+    let msaa_bundle = msaa::create_bundle(
+        &device,
+        &config,
+        &render_pipeline,
+        &vertex_index_buffer.vbo,
+        vertex_index_buffer.vbo_size,
+    );
+
     WgpuObject {
         surface,
         device,
@@ -163,6 +169,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         cam_buf: camera_buffer,
         cam_uniform: camera_uniform,
         msaa_buffer,
+        msaa_bundle,
         rotation: glam::Vec3::ZERO,
     }
 }
