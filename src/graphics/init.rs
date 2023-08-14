@@ -1,7 +1,8 @@
 use wgpu::{
-    util::DeviceExt, Backends, BindGroupDescriptor, Features, FragmentState, Limits, TextureFormat,
+    util::DeviceExt, Backends, BindGroupDescriptor, FragmentState, Limits, TextureFormat,
     VertexState,
 };
+use winit::dpi::PhysicalSize;
 
 use super::{cam, msaa, vertex, wgpu_object::WgpuObject};
 
@@ -18,21 +19,25 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
     };
 
     let adapter = instance
-        .enumerate_adapters(wgpu::Backends::all())
-        .find(|adapter| adapter.is_surface_supported(&surface))
-        .expect("No graphics adapter found");
+        .request_adapter(&wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::HighPerformance,
+            force_fallback_adapter: false,
+            compatible_surface: None,
+        })
+        .await
+        .expect("Unable to create rendering adapter");
 
     let (device, queue) = adapter
         .request_device(
             &wgpu::DeviceDescriptor {
-                label: Some("device"),
-                features: Features::all_webgpu_mask(),
+                label: Some("render_device"),
+                features: adapter.features(),
                 limits: Limits::downlevel_defaults(),
             },
             None,
         )
         .await
-        .expect("Unable to request device and queue");
+        .expect("Unable to request rendering device and queue");
 
     let size = window.inner_size();
 
@@ -123,7 +128,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
             targets: &[Some(config.view_formats[0].into())],
         }),
         primitive: wgpu::PrimitiveState {
-            topology: wgpu::PrimitiveTopology::LineList,
+            topology: wgpu::PrimitiveTopology::TriangleList,
             strip_index_format: None,
             front_face: wgpu::FrontFace::Ccw,
             // cull_mode: Some(wgpu::Face::Back),
@@ -172,4 +177,34 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         msaa_bundle,
         rotation: glam::Vec3::ZERO,
     }
+}
+
+pub fn create_render_texture(
+    size: &PhysicalSize<u32>,
+    device: &wgpu::Device,
+) -> (wgpu::Texture, wgpu::Buffer) {
+    let render_texture_desc = wgpu::TextureDescriptor {
+        label: Some("Render Texture Descriptor"),
+        size: wgpu::Extent3d {
+            width: size.width,
+            height: size.height,
+            depth_or_array_layers: 1,
+        },
+        mip_level_count: 1,
+        sample_count: WgpuObject::SAMPLE_COUNT,
+        dimension: wgpu::TextureDimension::D2,
+        format: TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        view_formats: &[],
+    };
+
+    (
+        device.create_texture(&render_texture_desc),
+        device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("image map buffer"),
+            size: size.width as u64 * size.height as u64 * 4,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        }),
+    )
 }

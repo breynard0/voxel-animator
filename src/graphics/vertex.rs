@@ -26,19 +26,19 @@ const VERTICES: &[Vertex] = &[
     },
     Vertex {
         pos: [0.5, 0.5, -0.5],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-    Vertex {
-        pos: [-0.5, -0.5, -0.5],
         color: [1.0, 0.0, 0.0, 1.0],
     },
     Vertex {
-        pos: [-0.5, -0.5, 0.5],
+        pos: [-0.5, -0.5, -0.5],
         color: [0.0, 1.0, 0.0, 1.0],
     },
     Vertex {
-        pos: [0.5, -0.5, 0.5],
+        pos: [-0.5, -0.5, 0.5],
         color: [0.0, 0.0, 1.0, 1.0],
+    },
+    Vertex {
+        pos: [0.5, -0.5, 0.5],
+        color: [0.0, 0.0, 0.0, 1.0],
     },
     Vertex {
         pos: [0.5, -0.5, -0.5],
@@ -126,20 +126,20 @@ pub fn create_buffers(device: &wgpu::Device) -> BufferOutput<'static> {
         usage: wgpu::BufferUsages::VERTEX,
     });
 
-    let mut indices = vec![];
+    // let mut indices = vec![];
 
-    for i in INDICES.chunks(3) {
-        indices.push(i[0]);
-        indices.push(i[1]);
-        indices.push(i[1]);
-        indices.push(i[2]);
-        indices.push(i[2]);
-        indices.push(i[0]);
-    }
+    // for i in INDICES.chunks(3) {
+    //     indices.push(i[0]);
+    //     indices.push(i[1]);
+    //     indices.push(i[1]);
+    //     indices.push(i[2]);
+    //     indices.push(i[2]);
+    //     indices.push(i[0]);
+    // }
 
     let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Index Buffer"),
-        contents: bytemuck::cast_slice(&indices),
+        contents: bytemuck::cast_slice(&INDICES),
         usage: wgpu::BufferUsages::INDEX,
     });
 
@@ -148,6 +148,6 @@ pub fn create_buffers(device: &wgpu::Device) -> BufferOutput<'static> {
         vbodesc: vertex_buffer_layout,
         vbo_size: VERTICES.len() as u32,
         idxbuf: index_buffer,
-        idx_size: indices.len() as u32,
+        idx_size: INDICES.len() as u32,
     }
 }

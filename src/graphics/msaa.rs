@@ -1,5 +1,3 @@
-use wgpu::RenderBundleEncoder;
-
 use super::wgpu_object::WgpuObject;
 
 pub fn create_multisampled_framebuffer(
@@ -51,6 +49,7 @@ pub fn create_bundle(
     })
 }
 
-// pub fn update_bundle_vbo(
-//     encoder: &mut RenderBundleEncoder<'_>
-// )
+pub fn rebuild_msaa(wobj: &mut WgpuObject) {
+    wobj.msaa_bundle = create_bundle(&wobj.device, &wobj.config, &wobj.pipeline, &wobj.vertex_buffer, wobj.vertex_buffer_size);
+    wobj.msaa_buffer = create_multisampled_framebuffer(&wobj.device, &wobj.config, WgpuObject::SAMPLE_COUNT);
+}

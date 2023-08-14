@@ -1,7 +1,3 @@
-use glam::Vec4Swizzles;
-
-use crate::graphics::vertex::Vertex;
-
 #[test]
 fn layer() {
     let filled = crate::models::voxel::Voxel {
@@ -161,7 +157,11 @@ fn layer() {
 
 #[test]
 fn matrix_application_translation() {
-    let mut vertex = Vertex {
+    use glam::Vec4Swizzles;
+
+    use crate::graphics::vertex::Vertex;
+
+    let vertex = Vertex {
         pos: [3., 7., 1.],
         color: [1., 1., 1., 1.],
     };
@@ -180,7 +180,11 @@ fn matrix_application_translation() {
 
 #[test]
 fn matrix_application_scaling() {
-    let mut vertex = Vertex {
+    use glam::Vec4Swizzles;
+
+    use crate::graphics::vertex::Vertex;
+
+    let vertex = Vertex {
         pos: [3., 7., 1.],
         color: [1., 1., 1., 1.],
     };
@@ -199,6 +203,8 @@ fn matrix_application_scaling() {
 
 #[test]
 fn matrix_application_rotation() {
+    use crate::graphics::vertex::Vertex;
+
     let vertex = Vertex {
         pos: [3., 7., 1.],
         color: [1., 1., 1., 1.],

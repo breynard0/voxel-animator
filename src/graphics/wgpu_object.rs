@@ -1,9 +1,6 @@
 use winit::window::Window;
 
-use super::{
-    cam, init,
-    vertex::{self, Vertex},
-};
+use super::cam;
 
 pub struct WgpuObject {
     pub surface: wgpu::Surface,
@@ -40,7 +37,8 @@ impl WgpuObject {
         if self.rotation.x >= 360.0 {
             self.rotation.x = 0.0;
         }
-        // self.vertex_buffer = vertex::new_vbo(&self.device, self.rotation)
+        self.vertex_buffer = super::vertex::new_vbo(&self.device, self.rotation);
+        super::msaa::rebuild_msaa(self);
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -49,6 +47,7 @@ impl WgpuObject {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
+            super::msaa::rebuild_msaa(self);
         }
     }
 }
