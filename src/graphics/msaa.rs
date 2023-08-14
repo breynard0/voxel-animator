@@ -37,7 +37,11 @@ pub fn create_bundle(
     let mut encoder = device.create_render_bundle_encoder(&wgpu::RenderBundleEncoderDescriptor {
         label: None,
         color_formats: &[Some(config.view_formats[0])],
-        depth_stencil: None,
+        depth_stencil: Some(wgpu::RenderBundleDepthStencil {
+            format: super::depth::DEPTH_FORMAT,
+            depth_read_only: false,
+            stencil_read_only: false,
+        }),
         sample_count: WgpuObject::SAMPLE_COUNT,
         multiview: None,
     });
@@ -50,6 +54,13 @@ pub fn create_bundle(
 }
 
 pub fn rebuild_msaa(wobj: &mut WgpuObject) {
-    wobj.msaa_bundle = create_bundle(&wobj.device, &wobj.config, &wobj.pipeline, &wobj.vertex_buffer, wobj.vertex_buffer_size);
-    wobj.msaa_buffer = create_multisampled_framebuffer(&wobj.device, &wobj.config, WgpuObject::SAMPLE_COUNT);
+    wobj.msaa_bundle = create_bundle(
+        &wobj.device,
+        &wobj.config,
+        &wobj.pipeline,
+        &wobj.vertex_buffer,
+        wobj.vertex_buffer_size,
+    );
+    wobj.msaa_buffer =
+        create_multisampled_framebuffer(&wobj.device, &wobj.config, WgpuObject::SAMPLE_COUNT);
 }

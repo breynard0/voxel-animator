@@ -19,8 +19,9 @@ pub struct WgpuObject {
     pub cam_buf: wgpu::Buffer,
     pub cam_bind_group: wgpu::BindGroup,
     pub msaa_buffer: wgpu::TextureView,
-    pub rotation: glam::Vec3,
     pub msaa_bundle: wgpu::RenderBundle,
+    pub depth_texture: super::texture::Texture,
+    pub rotation: glam::Vec3,
 }
 
 impl WgpuObject {
@@ -46,6 +47,7 @@ impl WgpuObject {
             self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
+            self.depth_texture = super::depth::create_depth_texture(&self.device, &self.config, "depth_texture");
             self.surface.configure(&self.device, &self.config);
             super::msaa::rebuild_msaa(self);
         }

@@ -36,11 +36,20 @@ pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
         .create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("commandencoder"),
         });
+
+    
     {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("RenderPass"),
             color_attachments: &[Some(color_attachment)],
-            depth_stencil_attachment: None,
+            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                view: &wobj.depth_texture.view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: true,
+                }),
+                stencil_ops: None,
+            }),
         });
 
         render_pass.execute_bundles(std::iter::once(&wobj.msaa_bundle));

@@ -61,6 +61,8 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
 
     surface.configure(&device, &config);
 
+    let depth_texture = super::depth::create_depth_texture(&device, &config, "depth_texture");
+
     let shader = device.create_shader_module(wgpu::include_wgsl!("./shaders/main.wgsl"));
 
     let vertex_index_buffer = vertex::create_buffers(&device);
@@ -129,6 +131,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         }),
         primitive: wgpu::PrimitiveState {
             topology: wgpu::PrimitiveTopology::TriangleList,
+            // topology: wgpu::PrimitiveTopology::LineList,
             strip_index_format: None,
             front_face: wgpu::FrontFace::Ccw,
             // cull_mode: Some(wgpu::Face::Back),
@@ -137,7 +140,13 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
             unclipped_depth: false,
             conservative: false,
         },
-        depth_stencil: None,
+        depth_stencil: Some(wgpu::DepthStencilState {
+            format: super::depth::DEPTH_FORMAT,
+            depth_write_enabled: true,
+            depth_compare: wgpu::CompareFunction::LessEqual,
+            stencil: wgpu::StencilState::default(),
+            bias: wgpu::DepthBiasState::default(),
+        }),
         multisample: wgpu::MultisampleState {
             count: WgpuObject::SAMPLE_COUNT,
             mask: !0,
@@ -175,6 +184,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         cam_uniform: camera_uniform,
         msaa_buffer,
         msaa_bundle,
+        depth_texture,
         rotation: glam::Vec3::ZERO,
     }
 }
