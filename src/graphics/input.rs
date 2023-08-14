@@ -8,7 +8,10 @@ pub enum InputMouseButton {
 }
 
 static mut KEY_STATE: Vec<VirtualKeyCode> = vec![];
+static mut LAST_KEY_STATE: Vec<VirtualKeyCode> = vec![];
+
 static mut MOUSE_STATE: Vec<InputMouseButton> = vec![];
+static mut LAST_MOUSE_STATE: Vec<InputMouseButton> = vec![];
 
 pub fn poll_keyboard_event(event: &winit::event::KeyboardInput) {
     let key = match event.virtual_keycode {
@@ -46,6 +49,11 @@ pub fn poll_mousebutton_event(event: &winit::event::MouseButton, state: &Element
     }
 }
 
+pub fn input_update() {
+    unsafe { LAST_MOUSE_STATE = MOUSE_STATE.clone() }
+    unsafe { LAST_KEY_STATE = KEY_STATE.clone() }
+}
+
 fn mousebutton_ops(button: InputMouseButton, state: &ElementState) {
     let mut mousestate = unsafe { MOUSE_STATE.clone() };
 
@@ -68,6 +76,23 @@ pub fn is_mouse_button_down(button: InputMouseButton) -> bool {
     unsafe { MOUSE_STATE.contains(&button) }
 }
 
+pub fn is_key_pressed(key: VirtualKeyCode) -> bool {
+    unsafe { !LAST_KEY_STATE.contains(&key) && KEY_STATE.contains(&key) }
+}
+
+pub fn is_key_released(key: VirtualKeyCode) -> bool {
+    unsafe { LAST_KEY_STATE.contains(&key) && !KEY_STATE.contains(&key) }
+}
+
+pub fn is_mouse_pressed(key: InputMouseButton) -> bool {
+    unsafe { !LAST_MOUSE_STATE.contains(&key) && MOUSE_STATE.contains(&key) }
+}
+
+pub fn is_mouse_released(key: InputMouseButton) -> bool {
+    unsafe { LAST_MOUSE_STATE.contains(&key) && !MOUSE_STATE.contains(&key) }
+}
+
+// Debugging function
 pub fn log_key_state() {
     unsafe { println!("{:?}", KEY_STATE) }
 }

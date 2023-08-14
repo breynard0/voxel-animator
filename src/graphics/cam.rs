@@ -1,3 +1,5 @@
+use wgpu::util::DeviceExt;
+
 pub struct Camera {
     pub eye: cgmath::Point3<f32>,
     pub target: cgmath::Point3<f32>,
@@ -22,6 +24,17 @@ impl Camera {
         let proj = cgmath::perspective(cgmath::Deg(self.fovy), self.aspect, self.znear, self.zfar);
 
         return OPENGL_TO_WGPU_MATRIX * proj * view;
+    }
+
+    pub fn create_staging_buffer(&self, device: &wgpu::Device) -> wgpu::Buffer {
+        let mut camera_uniform = super::cam::CameraUniform::new();
+        camera_uniform.update_view_proj(self);
+
+        device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Staging Buffer"),
+            contents: bytemuck::cast_slice(&[camera_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_SRC,
+        })
     }
 }
 

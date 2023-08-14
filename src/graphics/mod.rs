@@ -5,6 +5,7 @@ pub mod input;
 pub mod msaa;
 pub mod render;
 pub mod texture;
+pub mod transform;
 pub mod vertex;
 pub mod wgpu_object;
 
@@ -24,6 +25,8 @@ pub async fn run() {
     let window_id = window.id();
 
     let mut wgpu_obj = init::gfx_init(window).await;
+
+    let mut last_frame = std::time::Instant::now();
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
@@ -52,6 +55,10 @@ pub async fn run() {
             }
         }
         Event::MainEventsCleared => {
+            wgpu_obj.delta_time = std::time::Instant::now()
+                .duration_since(last_frame)
+                .as_secs_f32();
+            last_frame = std::time::Instant::now();
             wgpu_obj.window().request_redraw();
         }
         _ => {}

@@ -32,7 +32,8 @@ pub fn create_bundle(
     config: &wgpu::SurfaceConfiguration,
     pipeline: &wgpu::RenderPipeline,
     vertex_buffer: &wgpu::Buffer,
-    vertex_buffer_size: u32,
+    index_buffer: &wgpu::Buffer,
+    index_buffer_size: u32,
 ) -> wgpu::RenderBundle {
     let mut encoder = device.create_render_bundle_encoder(&wgpu::RenderBundleEncoderDescriptor {
         label: None,
@@ -47,7 +48,8 @@ pub fn create_bundle(
     });
     encoder.set_pipeline(&pipeline);
     encoder.set_vertex_buffer(0, vertex_buffer.slice(..));
-    encoder.draw(0..vertex_buffer_size, 0..1);
+    encoder.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+    encoder.draw_indexed(0..index_buffer_size, 0, 0..1);
     encoder.finish(&wgpu::RenderBundleDescriptor {
         label: Some("MSAA Render Bundle"),
     })
@@ -59,7 +61,8 @@ pub fn rebuild_msaa(wobj: &mut WgpuObject) {
         &wobj.config,
         &wobj.pipeline,
         &wobj.vertex_buffer,
-        wobj.vertex_buffer_size,
+        &wobj.index_buffer,
+        wobj.index_buffer_size,
     );
     wobj.msaa_buffer =
         create_multisampled_framebuffer(&wobj.device, &wobj.config, WgpuObject::SAMPLE_COUNT);

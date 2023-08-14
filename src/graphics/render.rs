@@ -37,7 +37,15 @@ pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
             label: Some("commandencoder"),
         });
 
-    
+    // Copy camera info if it is updated
+    match &wobj.cam_staging_buf {
+        Some(b) => {
+            encoder.copy_buffer_to_buffer(b, 0, &wobj.cam_buf, 0, b.size());
+        }
+        None => {}
+    }
+    wobj.cam_staging_buf = None;
+
     {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("RenderPass"),

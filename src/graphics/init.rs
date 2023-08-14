@@ -4,7 +4,11 @@ use wgpu::{
 };
 use winit::dpi::PhysicalSize;
 
-use super::{cam, msaa, vertex, wgpu_object::WgpuObject};
+use super::{
+    cam, msaa,
+    vertex::{self},
+    wgpu_object::WgpuObject,
+};
 
 pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -40,6 +44,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         .expect("Unable to request rendering device and queue");
 
     let size = window.inner_size();
+    let wireframe = false;
 
     let surface_caps = surface.get_capabilities(&adapter);
     let surface_format = surface_caps
@@ -65,7 +70,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
 
     let shader = device.create_shader_module(wgpu::include_wgsl!("./shaders/main.wgsl"));
 
-    let vertex_index_buffer = vertex::create_buffers(&device);
+    let vertex_index_buffer = vertex::create_buffers(&device, wireframe);
 
     let camera = cam::Camera {
         eye: (0.0, 1.0, 2.0).into(),
@@ -116,13 +121,68 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         push_constant_ranges: &[],
     });
 
-    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+    let render_pipeline = create_render_pipeline(
+        &device,
+        &render_pipeline_layout,
+        &shader,
+        &config,
+        wireframe,
+    );
+
+    let msaa_buffer =
+        msaa::create_multisampled_framebuffer(&device, &config, WgpuObject::SAMPLE_COUNT);
+
+    let msaa_bundle = msaa::create_bundle(
+        &device,
+        &config,
+        &render_pipeline,
+        &vertex_index_buffer.vbo,
+        &vertex_index_buffer.idxbuf,
+        vertex_index_buffer.idx_size,
+    );
+
+    WgpuObject {
+        surface,
+        device,
+        queue,
+        config,
+        size,
+        window,
+        pipeline: render_pipeline,
+        pipeline_layout: render_pipeline_layout,
+        shader,
+        vertex_buffer: vertex_index_buffer.vbo,
+        vertex_buffer_size: vertex_index_buffer.vbo_size,
+        index_buffer: vertex_index_buffer.idxbuf,
+        index_buffer_size: vertex_index_buffer.idx_size,
+        cam: camera,
+        cam_bind_group,
+        cam_buf: camera_buffer,
+        cam_staging_buf: None,
+        cam_uniform: camera_uniform,
+        msaa_buffer,
+        msaa_bundle,
+        depth_texture,
+        wireframe,
+        delta_time: 0.0,
+        rotation: glam::Vec3::ZERO,
+    }
+}
+
+pub fn create_render_pipeline<'a>(
+    device: &wgpu::Device,
+    render_pipeline_layout: &wgpu::PipelineLayout,
+    shader: &wgpu::ShaderModule,
+    config: &wgpu::SurfaceConfiguration,
+    wireframe: bool,
+) -> wgpu::RenderPipeline {
+    device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: Some("RenderPipeline"),
         layout: Some(&render_pipeline_layout),
         vertex: VertexState {
             module: &shader,
             entry_point: "vs_main",
-            buffers: &[vertex_index_buffer.vbodesc],
+            buffers: &[vertex::vertex_buffer_layout()],
         },
         fragment: Some(FragmentState {
             module: &shader,
@@ -130,8 +190,10 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
             targets: &[Some(config.view_formats[0].into())],
         }),
         primitive: wgpu::PrimitiveState {
-            topology: wgpu::PrimitiveTopology::TriangleList,
-            // topology: wgpu::PrimitiveTopology::LineList,
+            topology: match wireframe {
+                true => wgpu::PrimitiveTopology::LineList,
+                false => wgpu::PrimitiveTopology::TriangleList,
+            },
             strip_index_format: None,
             front_face: wgpu::FrontFace::Ccw,
             // cull_mode: Some(wgpu::Face::Back),
@@ -153,40 +215,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
             alpha_to_coverage_enabled: false,
         },
         multiview: None,
-    });
-
-    let msaa_buffer =
-        msaa::create_multisampled_framebuffer(&device, &config, WgpuObject::SAMPLE_COUNT);
-
-    let msaa_bundle = msaa::create_bundle(
-        &device,
-        &config,
-        &render_pipeline,
-        &vertex_index_buffer.vbo,
-        vertex_index_buffer.vbo_size,
-    );
-
-    WgpuObject {
-        surface,
-        device,
-        queue,
-        config,
-        size,
-        window,
-        pipeline: render_pipeline,
-        vertex_buffer: vertex_index_buffer.vbo,
-        vertex_buffer_size: vertex_index_buffer.vbo_size,
-        index_buffer: vertex_index_buffer.idxbuf,
-        index_buffer_size: vertex_index_buffer.idx_size,
-        cam: camera,
-        cam_bind_group,
-        cam_buf: camera_buffer,
-        cam_uniform: camera_uniform,
-        msaa_buffer,
-        msaa_bundle,
-        depth_texture,
-        rotation: glam::Vec3::ZERO,
-    }
+    })
 }
 
 pub fn create_render_texture(

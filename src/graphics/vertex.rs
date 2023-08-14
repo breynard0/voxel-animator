@@ -1,6 +1,8 @@
 use bytemuck::*;
 use wgpu::{util::DeviceExt, Buffer};
 
+use super::transform;
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
 pub struct Vertex {
@@ -49,7 +51,7 @@ const VERTICES: &[Vertex] = &[
 #[rustfmt::skip]
 const INDICES: &[u32] = &[
     0, 1, 3,
-    1, 2, 3,
+    3, 1, 2,
     4, 5, 7,
     5, 6, 7,
     1, 5, 2,
@@ -76,35 +78,15 @@ const INDICES: &[u32] = &[
 //     2, 3, 4,
 // ];
 
-pub struct BufferOutput<'a> {
+pub struct BufferOutput {
     pub vbo: Buffer,
-    pub vbodesc: wgpu::VertexBufferLayout<'a>,
     pub vbo_size: u32,
     pub idxbuf: Buffer,
     pub idx_size: u32,
 }
 
 pub fn new_vbo(device: &wgpu::Device, angles: glam::Vec3) -> wgpu::Buffer {
-    let mut vertices = vec![];
-
-    for vertex in VERTICES {
-        use glam::*;
-
-        let mut vertex = vertex.clone();
-        let x = angles.x;
-        let rotmat = mat4(
-            vec4(1.0, 0.0, 0.0, 0.0),
-            vec4(0.0, x.cos(), x.sin(), 0.0),
-            vec4(0.0, -x.sin(), x.cos(), 0.0),
-            vec4(0.0, 0.0, 0.0, 1.0),
-        );
-
-        let pos = [vertex.pos[0], vertex.pos[1], vertex.pos[2], 1.];
-        let pos_out = rotmat.mul_vec4(pos.into()).xyz().to_array();
-        vertex.pos = pos_out;
-
-        vertices.push(vertex);
-    }
+    let vertices = transform::rotate(&VERTICES.to_vec(), angles);
 
     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("VertexBuffer"),
@@ -113,41 +95,49 @@ pub fn new_vbo(device: &wgpu::Device, angles: glam::Vec3) -> wgpu::Buffer {
     })
 }
 
-pub fn create_buffers(device: &wgpu::Device) -> BufferOutput<'static> {
+pub fn vertex_buffer_layout() -> wgpu::VertexBufferLayout<'static> {
     let vertex_buffer_layout = wgpu::VertexBufferLayout {
         array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
         step_mode: wgpu::VertexStepMode::Vertex,
         attributes: &ATTRIBS,
     };
+    vertex_buffer_layout
+}
 
+pub fn create_buffers(device: &wgpu::Device, wireframe: bool) -> BufferOutput {
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("VertexBuffer"),
         contents: bytemuck::cast_slice(VERTICES),
         usage: wgpu::BufferUsages::VERTEX,
     });
 
-    // let mut indices = vec![];
+    let indices = match wireframe {
+        true => {
+            let mut indices = vec![];
 
-    // for i in INDICES.chunks(3) {
-    //     indices.push(i[0]);
-    //     indices.push(i[1]);
-    //     indices.push(i[1]);
-    //     indices.push(i[2]);
-    //     indices.push(i[2]);
-    //     indices.push(i[0]);
-    // }
+            for i in INDICES.chunks(3) {
+                indices.push(i[0]);
+                indices.push(i[1]);
+                indices.push(i[1]);
+                indices.push(i[2]);
+                indices.push(i[2]);
+                indices.push(i[0]);
+            }
+            indices
+        }
+        false => INDICES.to_vec(),
+    };
 
     let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Index Buffer"),
-        contents: bytemuck::cast_slice(&INDICES),
+        contents: bytemuck::cast_slice(&indices),
         usage: wgpu::BufferUsages::INDEX,
     });
 
     BufferOutput {
         vbo: vertex_buffer,
-        vbodesc: vertex_buffer_layout,
         vbo_size: VERTICES.len() as u32,
         idxbuf: index_buffer,
-        idx_size: INDICES.len() as u32,
+        idx_size: indices.len() as u32,
     }
 }

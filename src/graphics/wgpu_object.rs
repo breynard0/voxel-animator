@@ -1,6 +1,6 @@
 use winit::window::Window;
 
-use super::cam;
+use super::{cam, init, input, vertex};
 
 pub struct WgpuObject {
     pub surface: wgpu::Surface,
@@ -10,6 +10,8 @@ pub struct WgpuObject {
     pub size: winit::dpi::PhysicalSize<u32>,
     pub window: Window,
     pub pipeline: wgpu::RenderPipeline,
+    pub pipeline_layout: wgpu::PipelineLayout,
+    pub shader: wgpu::ShaderModule,
     pub vertex_buffer: wgpu::Buffer,
     pub vertex_buffer_size: u32,
     pub index_buffer: wgpu::Buffer,
@@ -17,11 +19,14 @@ pub struct WgpuObject {
     pub cam: cam::Camera,
     pub cam_uniform: cam::CameraUniform,
     pub cam_buf: wgpu::Buffer,
+    pub cam_staging_buf: Option<wgpu::Buffer>,
     pub cam_bind_group: wgpu::BindGroup,
     pub msaa_buffer: wgpu::TextureView,
     pub msaa_bundle: wgpu::RenderBundle,
     pub depth_texture: super::texture::Texture,
+    pub wireframe: bool,
     pub rotation: glam::Vec3,
+    pub delta_time: f32,
 }
 
 impl WgpuObject {
@@ -32,14 +37,27 @@ impl WgpuObject {
     }
 
     pub fn update(&mut self) {
-        self.rotation.x += 0.001;
-        self.rotation.y += 1.0;
-        self.rotation.z += 1.0;
-        if self.rotation.x >= 360.0 {
-            self.rotation.x = 0.0;
-        }
+        self.rotation.x += 1.0 * self.delta_time;
+        self.rotation.y += 1.0 * self.delta_time;
+        self.rotation.z += 1.0 * self.delta_time;
+
         self.vertex_buffer = super::vertex::new_vbo(&self.device, self.rotation);
         super::msaa::rebuild_msaa(self);
+        if input::is_key_pressed(winit::event::VirtualKeyCode::F1) {
+            self.wireframe = !self.wireframe;
+            let vib = vertex::create_buffers(&self.device, self.wireframe);
+            self.index_buffer = vib.idxbuf;
+            self.index_buffer_size = vib.idx_size;
+            self.pipeline = init::create_render_pipeline(
+                &self.device,
+                &self.pipeline_layout,
+                &self.shader,
+                &self.config,
+                self.wireframe,
+            );
+        }
+
+        input::input_update();
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -47,9 +65,12 @@ impl WgpuObject {
             self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
-            self.depth_texture = super::depth::create_depth_texture(&self.device, &self.config, "depth_texture");
+            self.depth_texture =
+                super::depth::create_depth_texture(&self.device, &self.config, "depth_texture");
             self.surface.configure(&self.device, &self.config);
             super::msaa::rebuild_msaa(self);
+            self.cam.aspect = new_size.width as f32 / new_size.height as f32;
+            self.cam_staging_buf = Some(self.cam.create_staging_buffer(&self.device));
         }
     }
 }
