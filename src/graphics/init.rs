@@ -73,7 +73,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
     let vertex_index_buffer = vertex::create_buffers(&device, wireframe);
 
     let camera = cam::Camera {
-        eye: (0.0, 1.0, 2.0).into(),
+        eye: (-2.0, 1.0, 2.0).into(),
         target: (0.0, 0.0, 0.0).into(),
         up: cgmath::Vector3::unit_y(),
         aspect: config.width as f32 / config.height as f32,

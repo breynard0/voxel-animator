@@ -4,7 +4,7 @@ use super::voxel::Voxel;
 
 #[derive(Default, Clone)]
 pub struct Layer {
-    pub label: String,
+    pub label: &'static str,
     pub value: Vec<Vec<Voxel>>,
 }
 

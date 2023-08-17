@@ -24,6 +24,7 @@ fn vs_main(
     return out;
 }
 
+// NOTE TO SELF: Colour should be that of the vertex with smaller position
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     return vec4<f32>(in.color.xyz, 1.0);

@@ -37,9 +37,11 @@ impl WgpuObject {
     }
 
     pub fn update(&mut self) {
-        self.rotation.x += 1.0 * self.delta_time;
-        self.rotation.y += 1.0 * self.delta_time;
-        self.rotation.z += 1.0 * self.delta_time;
+        if input::is_mouse_button_down(input::InputMouseButton::Middle) {
+            let speed = 1000.0;
+            self.rotation.x += input::get_mouse_delta_range(self.size).1 * self.delta_time * speed;
+            self.rotation.z += input::get_mouse_delta_range(self.size).0 * self.delta_time * speed;
+        }
 
         self.vertex_buffer = super::vertex::new_vbo(&self.device, self.rotation);
         super::msaa::rebuild_msaa(self);

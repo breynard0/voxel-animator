@@ -7,6 +7,10 @@ pub struct Voxel {
 }
 
 impl Voxel {
+    pub fn new(filled: bool, material: Material) -> Self {
+        Self { filled, material }
+    }
+
     pub fn filled(&self) -> Self {
         Self {
             filled: true,

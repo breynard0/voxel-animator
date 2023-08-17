@@ -13,7 +13,7 @@ fn layer() {
     {
         // 6x8 layer with somewhat circular shape and some variations, completely filled in
         let layer = crate::models::layer::Layer {
-            label: "testlayer1".to_string(),
+            label: "testlayer1",
             #[rustfmt::skip]
             value: vec![
                 vec![empty, empty, filled, filled, filled, empty],
@@ -29,7 +29,7 @@ fn layer() {
 
         // Same as last layer, but only outside vertices filled
         let layer2 = crate::models::layer::Layer {
-            label: "testlayer2".to_string(),
+            label: "testlayer2",
             #[rustfmt::skip]
             value: vec![
                 vec![empty, empty, filled, filled, filled, empty],
@@ -49,7 +49,7 @@ fn layer() {
 
     {
         let layer = crate::models::layer::Layer {
-            label: "testlayer3".to_string(),
+            label: "testlayer3",
             #[rustfmt::skip]
             value: vec![
                 vec![filled, filled, empty, empty, empty, empty, empty, empty, empty],
@@ -66,7 +66,7 @@ fn layer() {
         };
 
         let layer2 = crate::models::layer::Layer {
-            label: "testlayer4".to_string(),
+            label: "testlayer4",
             #[rustfmt::skip]
             value: vec![
                 vec![filled, filled, empty, empty, empty, empty, empty, empty, empty],
@@ -87,7 +87,7 @@ fn layer() {
     }
     {
         let layer = crate::models::layer::Layer {
-            label: "testlayer5".to_string(),
+            label: "testlayer5",
             #[rustfmt::skip]
             value: vec![
                 vec![empty, empty, filled, filled, filled, filled, filled, filled, empty, empty, empty, filled],
@@ -119,7 +119,7 @@ fn layer() {
         };
 
         let layer2 = crate::models::layer::Layer {
-            label: "testlayer6".to_string(),
+            label: "testlayer6",
             #[rustfmt::skip]
             value: vec![
                 vec![empty, empty, filled, filled, filled, filled, filled, filled, empty, empty, empty, filled],
