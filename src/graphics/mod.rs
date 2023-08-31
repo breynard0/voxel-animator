@@ -37,10 +37,11 @@ pub async fn run() {
             WindowEvent::MouseInput { button, state, .. } => {
                 input::poll_mousebutton_event(button, state)
             }
+            WindowEvent::MouseWheel { delta, .. } => input::poll_scroll_wheel(delta),
             WindowEvent::Resized(physical_size) => {
                 wgpu_obj.resize(*physical_size);
             }
-            WindowEvent::CursorMoved { position, ..} => input::poll_mouse_move_event(position),
+            WindowEvent::CursorMoved { position, .. } => input::poll_mouse_move_event(position),
             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
             _ => {}
         },

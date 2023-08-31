@@ -1,4 +1,7 @@
-use winit::{event::{ElementState, VirtualKeyCode}, dpi::{PhysicalPosition, PhysicalSize}};
+use winit::{
+    dpi::{PhysicalPosition, PhysicalSize},
+    event::{ElementState, VirtualKeyCode, MouseScrollDelta},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InputMouseButton {
@@ -17,6 +20,8 @@ static mut LAST_MOUSE_STATE: Vec<InputMouseButton> = vec![];
 
 static mut MOUSE_POS: PhysicalPosition<f64> = PhysicalPosition::new(0.0, 0.0);
 static mut LAST_MOUSE_POS: PhysicalPosition<f64> = PhysicalPosition::new(0.0, 0.0);
+
+static mut MOUSE_SCROLL_LAST: f32 = 0.0;
 
 pub fn poll_keyboard_event(event: &winit::event::KeyboardInput) {
     let key = match event.virtual_keycode {
@@ -58,10 +63,22 @@ pub fn poll_mouse_move_event(position: &winit::dpi::PhysicalPosition<f64>) {
     unsafe { MOUSE_POS = position.clone() }
 }
 
+pub fn poll_scroll_wheel(delta: &MouseScrollDelta) {
+    unsafe { MOUSE_SCROLL_LAST = match delta {
+        MouseScrollDelta::LineDelta(_, y) => *y,
+        MouseScrollDelta::PixelDelta(x) => x.y as f32,
+    } }
+}
+
+pub fn reset_scroll_wheel() {
+    unsafe { MOUSE_SCROLL_LAST = 0.0 }
+}
+
 pub fn input_update() {
     unsafe { LAST_MOUSE_STATE = MOUSE_STATE.clone() }
     unsafe { LAST_KEY_STATE = KEY_STATE.clone() }
     unsafe { LAST_MOUSE_POS = MOUSE_POS.clone() }
+    reset_scroll_wheel();
 }
 
 fn mousebutton_ops(button: InputMouseButton, state: &ElementState) {
@@ -113,7 +130,10 @@ pub fn get_mouse_position() -> PhysicalPosition<f64> {
 
 pub fn get_mouse_delta() -> PhysicalPosition<f64> {
     unsafe {
-        PhysicalPosition::new(MOUSE_POS.x - LAST_MOUSE_POS.x, MOUSE_POS.y - LAST_MOUSE_POS.y)
+        PhysicalPosition::new(
+            MOUSE_POS.x - LAST_MOUSE_POS.x,
+            MOUSE_POS.y - LAST_MOUSE_POS.y,
+        )
     }
 }
 
@@ -123,7 +143,7 @@ pub fn get_mouse_position_range(window_size: PhysicalSize<u32>) -> (f32, f32) {
 
     let x_range = pos.x / window_size.width as f64;
     let y_range = pos.y / window_size.height as f64;
-    
+
     (x_range as f32 * 2.0 - 1.0, y_range as f32 * 2.0 - 1.0)
 }
 
@@ -134,5 +154,9 @@ pub fn get_mouse_delta_range(window_size: PhysicalSize<u32>) -> (f32, f32) {
     let x_range = delta.x / window_size.width as f64;
     let y_range = delta.y / window_size.height as f64;
 
-    (x_range as f32, y_range as f32)   
+    (x_range as f32, y_range as f32)
+}
+
+pub fn get_scroll_delta() -> f32 {
+    unsafe { MOUSE_SCROLL_LAST }
 }

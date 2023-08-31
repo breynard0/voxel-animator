@@ -1,14 +1,12 @@
-use wgpu::{
-    util::DeviceExt, Backends, BindGroupDescriptor, FragmentState, Limits, TextureFormat,
-    VertexState,
-};
-use winit::dpi::PhysicalSize;
+use wgpu::{util::DeviceExt, Backends, FragmentState, Limits, TextureFormat, VertexState};
 
 use super::{
-    cam, msaa,
+    cam, msaa, transform,
     vertex::{self},
     wgpu_object::WgpuObject,
 };
+
+use crate::utils::consts::*;
 
 pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -91,33 +89,58 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
 
-    let camera_bind_group_layout =
+    let transform_uniform = transform::TransformUniform::default();
+    let transform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("transform Buffer"),
+        contents: bytemuck::cast_slice(&[transform_uniform]),
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+    });
+
+    let uniform_bind_group_layout =
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("CamBindGroup"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
+            label: Some("UniformBindGroupLayout"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
                 },
-                count: None,
-            }],
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+            ],
         });
 
-    let cam_bind_group = device.create_bind_group(&BindGroupDescriptor {
-        label: Some("CamBindGroup"),
-        layout: &camera_bind_group_layout,
-        entries: &[wgpu::BindGroupEntry {
-            binding: 0,
-            resource: camera_buffer.as_entire_binding(),
-        }],
+    let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("UniformBindGroup"),
+        layout: &uniform_bind_group_layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer.as_entire_binding(),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: transform_buffer.as_entire_binding(),
+            },
+        ],
     });
 
     let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("RenderPipelineLayout"),
-        bind_group_layouts: &[&camera_bind_group_layout],
+        bind_group_layouts: &[&uniform_bind_group_layout],
         push_constant_ranges: &[],
     });
 
@@ -141,7 +164,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         vertex_index_buffer.idx_size,
     );
 
-    WgpuObject {
+    let mut out = WgpuObject {
         surface,
         device,
         queue,
@@ -156,17 +179,24 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         index_buffer: vertex_index_buffer.idxbuf,
         index_buffer_size: vertex_index_buffer.idx_size,
         cam: camera,
-        cam_bind_group,
         cam_buf: camera_buffer,
         cam_staging_buf: None,
         cam_uniform: camera_uniform,
+        transform_uniform,
+        transform_buf: transform_buffer,
+        transform_staging_buf: None,
+        uniform_bind_group,
         msaa_buffer,
         msaa_bundle,
         depth_texture,
         wireframe,
         delta_time: 0.0,
         rotation: glam::Vec3::ZERO,
-    }
+    };
+
+    out.update();
+
+    out
 }
 
 pub fn create_render_pipeline<'a>(
@@ -203,7 +233,7 @@ pub fn create_render_pipeline<'a>(
             conservative: false,
         },
         depth_stencil: Some(wgpu::DepthStencilState {
-            format: super::depth::DEPTH_FORMAT,
+            format: DEPTH_FORMAT,
             depth_write_enabled: true,
             depth_compare: wgpu::CompareFunction::LessEqual,
             stencil: wgpu::StencilState::default(),
@@ -216,34 +246,4 @@ pub fn create_render_pipeline<'a>(
         },
         multiview: None,
     })
-}
-
-pub fn create_render_texture(
-    size: &PhysicalSize<u32>,
-    device: &wgpu::Device,
-) -> (wgpu::Texture, wgpu::Buffer) {
-    let render_texture_desc = wgpu::TextureDescriptor {
-        label: Some("Render Texture Descriptor"),
-        size: wgpu::Extent3d {
-            width: size.width,
-            height: size.height,
-            depth_or_array_layers: 1,
-        },
-        mip_level_count: 1,
-        sample_count: WgpuObject::SAMPLE_COUNT,
-        dimension: wgpu::TextureDimension::D2,
-        format: TextureFormat::Rgba8UnormSrgb,
-        usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        view_formats: &[],
-    };
-
-    (
-        device.create_texture(&render_texture_desc),
-        device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("image map buffer"),
-            size: size.width as u64 * size.height as u64 * 4,
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-            mapped_at_creation: false,
-        }),
-    )
 }

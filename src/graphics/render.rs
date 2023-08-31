@@ -1,6 +1,8 @@
+use std::mem::size_of;
+
 use wgpu::SurfaceError;
 
-use super::wgpu_object::WgpuObject;
+use super::{wgpu_object::WgpuObject, cam};
 
 pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
     let output = wobj.surface.get_current_texture()?;
@@ -46,6 +48,15 @@ pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
     }
     wobj.cam_staging_buf = None;
 
+    // Copy transform info if it is updated
+    match &wobj.transform_staging_buf {
+        Some(b) => {
+            encoder.copy_buffer_to_buffer(b, 0, &wobj.transform_buf, 0, b.size());
+        }
+        None => {}
+    }
+    wobj.transform_staging_buf = None;
+
     {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("RenderPass"),
@@ -63,7 +74,7 @@ pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
         render_pass.execute_bundles(std::iter::once(&wobj.msaa_bundle));
 
         render_pass.set_pipeline(&wobj.pipeline);
-        render_pass.set_bind_group(0, &wobj.cam_bind_group, &[]);
+        render_pass.set_bind_group(0, &wobj.uniform_bind_group, &[]);
         render_pass.set_vertex_buffer(0, wobj.vertex_buffer.slice(..));
         render_pass.set_index_buffer(wobj.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..wobj.index_buffer_size, 0, 0..1);

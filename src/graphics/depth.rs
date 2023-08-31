@@ -1,6 +1,6 @@
-use super::wgpu_object::WgpuObject;
+use crate::utils::consts::*;
 
-pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+use super::wgpu_object::WgpuObject;
 
 pub fn create_depth_texture(
     device: &wgpu::Device,

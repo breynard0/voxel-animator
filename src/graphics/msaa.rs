@@ -1,3 +1,5 @@
+use crate::utils::consts::*;
+
 use super::wgpu_object::WgpuObject;
 
 pub fn create_multisampled_framebuffer(
@@ -39,7 +41,7 @@ pub fn create_bundle(
         label: None,
         color_formats: &[Some(config.view_formats[0])],
         depth_stencil: Some(wgpu::RenderBundleDepthStencil {
-            format: super::depth::DEPTH_FORMAT,
+            format: DEPTH_FORMAT,
             depth_read_only: false,
             stencil_read_only: false,
         }),

@@ -211,10 +211,10 @@ fn is_filled_at_offset(
 }
 
 fn push_indices(vector: &mut Vec<u32>, indices: &[u32], iter: u32) {
-    vector.push(indices[0]+(iter*8));
-    vector.push(indices[1]+(iter*8));
-    vector.push(indices[2]+(iter*8));
-    vector.push(indices[3]+(iter*8));
-    vector.push(indices[4]+(iter*8));
-    vector.push(indices[5]+(iter*8));
+    vector.push(indices[0] + (iter * 8));
+    vector.push(indices[1] + (iter * 8));
+    vector.push(indices[2] + (iter * 8));
+    vector.push(indices[3] + (iter * 8));
+    vector.push(indices[4] + (iter * 8));
+    vector.push(indices[5] + (iter * 8));
 }

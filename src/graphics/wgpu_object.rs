@@ -1,6 +1,8 @@
 use winit::window::Window;
 
-use super::{cam, init, input, vertex};
+use crate::utils::consts;
+
+use super::{cam, init, input, transform, vertex};
 
 pub struct WgpuObject {
     pub surface: wgpu::Surface,
@@ -20,7 +22,10 @@ pub struct WgpuObject {
     pub cam_uniform: cam::CameraUniform,
     pub cam_buf: wgpu::Buffer,
     pub cam_staging_buf: Option<wgpu::Buffer>,
-    pub cam_bind_group: wgpu::BindGroup,
+    pub transform_uniform: transform::TransformUniform,
+    pub transform_buf: wgpu::Buffer,
+    pub transform_staging_buf: Option<wgpu::Buffer>,
+    pub uniform_bind_group: wgpu::BindGroup,
     pub msaa_buffer: wgpu::TextureView,
     pub msaa_bundle: wgpu::RenderBundle,
     pub depth_texture: super::texture::Texture,
@@ -38,9 +43,21 @@ impl WgpuObject {
 
     pub fn update(&mut self) {
         if input::is_mouse_button_down(input::InputMouseButton::Middle) {
-            let speed = 1000.0;
-            self.rotation.x += input::get_mouse_delta_range(self.size).1 * self.delta_time * speed;
-            self.rotation.z += input::get_mouse_delta_range(self.size).0 * self.delta_time * speed;
+            let speed = 1.0;
+            let x = -input::get_mouse_delta_range(self.size).0 * self.delta_time * speed;
+            let y = -input::get_mouse_delta_range(self.size).1 * self.delta_time * speed;
+        }
+
+        println!("{:?}", input::get_scroll_delta());
+
+        if input::is_key_pressed(winit::event::VirtualKeyCode::Up) {
+            self.transform_uniform.zoom += 0.1;
+            self.transform_staging_buf = Some(self.transform_uniform.create_staging_buffer(&self.device))
+        }
+
+        if input::is_key_pressed(winit::event::VirtualKeyCode::Down) {
+            self.transform_uniform.zoom -= 0.1;
+            self.transform_staging_buf = Some(self.transform_uniform.create_staging_buffer(&self.device))
         }
 
         self.vertex_buffer = super::vertex::new_vbo(&self.device, self.rotation);
