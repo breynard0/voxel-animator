@@ -95,6 +95,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         contents: bytemuck::cast_slice(&[transform_uniform]),
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
+    let transform_staging_buf = transform_uniform.create_staging_buffer(&device);
 
     let uniform_bind_group_layout =
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -184,7 +185,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         cam_uniform: camera_uniform,
         transform_uniform,
         transform_buf: transform_buffer,
-        transform_staging_buf: None,
+        transform_staging_buf: Some(transform_staging_buf),
         uniform_bind_group,
         msaa_buffer,
         msaa_bundle,

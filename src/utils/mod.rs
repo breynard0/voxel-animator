@@ -1,7 +1,7 @@
 use crate::graphics::vertex::Vertex;
 
-pub mod tests;
 pub mod consts;
+pub mod tests;
 
 pub fn normalize_scale(vertices: &Vec<Vertex>, min: f32, max: f32) -> Vec<Vertex> {
     let mut max_x: f32 = 0.0;

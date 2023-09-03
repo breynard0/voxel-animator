@@ -5,9 +5,12 @@ struct CameraUniform {
 var<uniform> camera: CameraUniform;
 
 struct TransformUniform {
-    rot_mat: mat4x4<f32>,
+    // rot_mat_x: mat4x4<f32>,
+    // rot_mat_y: mat4x4<f32>,
+    // rot_mat_z: mat4x4<f32>,
     zoom: f32,
-    offset: vec2<f32>
+    zoom_factor: f32,
+    offset: vec2<f32>,
 }
 @group(0) @binding(1)
 var<uniform> transform: TransformUniform;
@@ -27,7 +30,18 @@ fn vs_main(
     model: VertexInput,
 ) -> VertexOutput {
     var out: VertexOutput;
-    out.clip_position = camera.view_proj * vec4<f32>(model.position + (1. - 1. / clamp(transform.zoom, 0.01, 100000000.0)), 1.0) * transform.rot_mat;
+    // let new_pos: vec3<f32> = vec3<f32>(
+    //         model.position.x * (transform.zoom * (model.position.x / abs(model.position.x))),
+    //         model.position.y * (transform.zoom * (model.position.y / abs(model.position.y))),
+    //         model.position.z * (transform.zoom * (model.position.z / abs(model.position.z)))
+    //     );
+
+    // let pos_x = vec4((model.position * transform.zoom_factor), 0.0) * (transform.rot_mat_x);
+    // let pos_y = vec4((model.position * transform.zoom_factor), 0.0) * (transform.rot_mat_y);
+    // let pos_z = vec4((model.position * transform.zoom_factor), 0.0) * (transform.rot_mat_z);
+    
+    // out.clip_position = camera.view_proj * vec4<f32>(vec3(pos_x.x, pos_y.y, (length(pos_x)+length(pos_y)) / 2.0), 1.0);
+    out.clip_position = camera.view_proj * vec4<f32>(model.position * transform.zoom_factor, 1.0);
     out.color = model.color;
     return out;
 }

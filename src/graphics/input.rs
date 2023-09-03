@@ -1,6 +1,6 @@
 use winit::{
     dpi::{PhysicalPosition, PhysicalSize},
-    event::{ElementState, VirtualKeyCode, MouseScrollDelta},
+    event::{ElementState, MouseScrollDelta, VirtualKeyCode},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -64,10 +64,12 @@ pub fn poll_mouse_move_event(position: &winit::dpi::PhysicalPosition<f64>) {
 }
 
 pub fn poll_scroll_wheel(delta: &MouseScrollDelta) {
-    unsafe { MOUSE_SCROLL_LAST = match delta {
-        MouseScrollDelta::LineDelta(_, y) => *y,
-        MouseScrollDelta::PixelDelta(x) => x.y as f32,
-    } }
+    unsafe {
+        MOUSE_SCROLL_LAST = match delta {
+            MouseScrollDelta::LineDelta(_, y) => *y,
+            MouseScrollDelta::PixelDelta(x) => x.y as f32,
+        }
+    }
 }
 
 pub fn reset_scroll_wheel() {

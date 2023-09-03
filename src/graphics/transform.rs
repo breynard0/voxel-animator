@@ -1,31 +1,43 @@
 use glam::{mat4, vec4};
 use wgpu::util::DeviceExt;
 
+use crate::utils::consts;
+
 use super::vertex;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TransformUniform {
-    pub rot_mat: [[f32; 4]; 4],
+    // pub rot_mat_x: [[f32; 4]; 4],
+    // pub rot_mat_y: [[f32; 4]; 4],
+    // pub rot_mat_z: [[f32; 4]; 4],
     pub zoom: f32,
+    zoom_factor: f32,
     pub offset: [f32; 2],
-    _ihategpus: f32,
 }
 
 impl Default for TransformUniform {
     fn default() -> Self {
         let rot_mats = rot_mat(0.0, 0.0, 0.0);
-        let rot_mat = rot_mats.0 * rot_mats.1 * rot_mats.2;
 
-        Self { rot_mat: rot_mat.to_cols_array_2d(), zoom: 1.0, offset: Default::default(), _ihategpus: 0.0 }
+        Self {
+            // rot_mat_x: rot_mats.0.to_cols_array_2d(),
+            // rot_mat_y: rot_mats.1.to_cols_array_2d(),
+            // rot_mat_z: rot_mats.2.to_cols_array_2d(),
+            zoom: 1.0,
+            offset: Default::default(),
+            zoom_factor: 0.0,
+        }
     }
 }
 
 impl TransformUniform {
     pub fn create_staging_buffer(self, device: &wgpu::Device) -> wgpu::Buffer {
+        let mut uniform = self;
+        uniform.zoom_factor = (1.0 + consts::ZOOM_SENS).powf(self.zoom);
         device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Tranform Staging Buffer"),
-            contents: bytemuck::cast_slice(&[self]),
+            contents: bytemuck::cast_slice(&[uniform]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_SRC,
         })
     }

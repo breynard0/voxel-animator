@@ -1,7 +1,5 @@
 use winit::window::Window;
 
-use crate::utils::consts;
-
 use super::{cam, init, input, transform, vertex};
 
 pub struct WgpuObject {
@@ -43,24 +41,31 @@ impl WgpuObject {
 
     pub fn update(&mut self) {
         if input::is_mouse_button_down(input::InputMouseButton::Middle) {
-            let speed = 1.0;
-            let x = -input::get_mouse_delta_range(self.size).0 * self.delta_time * speed;
-            let y = -input::get_mouse_delta_range(self.size).1 * self.delta_time * speed;
+            let speed = 400.0;
+            let x = -input::get_mouse_delta_range(self.size).1 * self.delta_time * speed;
+            let y = -input::get_mouse_delta_range(self.size).0 * self.delta_time * speed;
+
+            self.rotation.x += x;
+            self.rotation.y += y;
+
+            let rotmats = transform::rot_mat(self.rotation.x, self.rotation.y, self.rotation.z);
+
+            let eye = rotmats.0 * glam::Vec4::ONE;
+            let eye = rotmats.1.transpose() * eye;
+            let eye = rotmats.2.transpose() * eye;
+            self.cam.eye = cgmath::point3(eye.x, eye.y, eye.z);
+            
+            self.cam_staging_buf = Some(self.cam.create_staging_buffer(&self.device))
         }
 
-        println!("{:?}", input::get_scroll_delta());
-
-        if input::is_key_pressed(winit::event::VirtualKeyCode::Up) {
-            self.transform_uniform.zoom += 0.1;
-            self.transform_staging_buf = Some(self.transform_uniform.create_staging_buffer(&self.device))
+        let prezoom = self.transform_uniform.zoom;
+        self.transform_uniform.zoom += input::get_scroll_delta();
+        if self.transform_uniform.zoom != prezoom {
+            self.transform_staging_buf =
+                Some(self.transform_uniform.create_staging_buffer(&self.device));
         }
 
-        if input::is_key_pressed(winit::event::VirtualKeyCode::Down) {
-            self.transform_uniform.zoom -= 0.1;
-            self.transform_staging_buf = Some(self.transform_uniform.create_staging_buffer(&self.device))
-        }
-
-        self.vertex_buffer = super::vertex::new_vbo(&self.device, self.rotation);
+        // self.vertex_buffer = super::vertex::new_vbo(&self.device, self.rotation);
         super::msaa::rebuild_msaa(self);
         if input::is_key_pressed(winit::event::VirtualKeyCode::F1) {
             self.wireframe = !self.wireframe;

@@ -1,8 +1,6 @@
-use std::mem::size_of;
-
 use wgpu::SurfaceError;
 
-use super::{wgpu_object::WgpuObject, cam};
+use super::wgpu_object::WgpuObject;
 
 pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
     let output = wobj.surface.get_current_texture()?;

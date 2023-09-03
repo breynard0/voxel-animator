@@ -222,3 +222,13 @@ fn matrix_application_rotation() {
 
     println!("{:?}", out)
 }
+
+#[test]
+fn rotmat_gen() {
+    let r = crate::graphics::transform::rot_mat(3.0, 5.0, 2.0);
+    let out = r.0 * r.1 * r.2;
+    println!(
+        "{:?}\n{:?}\n{:?}\n{:?}",
+        out.x_axis, out.y_axis, out.z_axis, out.w_axis
+    )
+}
