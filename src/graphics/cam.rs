@@ -31,6 +31,15 @@ impl Camera {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_SRC,
         })
     }
+
+    pub fn rebuild_up(&mut self) {
+        let eye = glam::vec3(self.eye.x, self.eye.y, self.eye.z);
+        let target = glam::vec3(self.target.x, self.target.y, self.target.z);
+        let forward = (target - eye).normalize();
+        let right = forward.cross(glam::vec3(0.0, 1.0, 0.0)).normalize();
+        let up = right.cross(forward);
+        self.up = cgmath::vec3(up.x, up.y, up.z);
+    }
 }
 
 #[repr(C)]

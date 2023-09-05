@@ -5,8 +5,6 @@ use crate::models::model;
 
 use crate::utils::consts::*;
 
-use super::transform;
-
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
 pub struct Vertex {
@@ -27,11 +25,10 @@ pub struct BufferOutput {
     pub idx_size: u32,
 }
 
-pub fn new_vbo(device: &wgpu::Device, angles: glam::Vec3) -> wgpu::Buffer {
+pub fn new_vbo(device: &wgpu::Device) -> wgpu::Buffer {
     let model = model::gen_vert_idx(&model::get_model());
 
-    let vertices = transform::rotate(&model.0.to_vec(), angles);
-    // let vertices = model.0;
+    let vertices = model.0;
 
     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("VertexBuffer"),

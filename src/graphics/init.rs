@@ -70,7 +70,9 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
 
     let vertex_index_buffer = vertex::create_buffers(&device, wireframe);
 
-    let camera = cam::Camera {
+    let rotation = glam::Vec3::ZERO;
+
+    let mut camera = cam::Camera {
         eye: (-2.0, 1.0, 2.0).into(),
         target: (0.0, 0.0, 0.0).into(),
         up: cgmath::Vector3::unit_y(),
@@ -79,6 +81,12 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         znear: 0.1,
         zfar: 100.0,
     };
+
+    camera.eye = cgmath::point3(
+        -(-rotation.x).sin() * (rotation.y).cos(),
+        -(rotation.y).sin(),
+        (-rotation.x).cos() * (rotation.y).cos(),
+    );
 
     let mut camera_uniform = cam::CameraUniform::new();
     camera_uniform.update_view_proj(&camera);
@@ -192,7 +200,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         depth_texture,
         wireframe,
         delta_time: 0.0,
-        rotation: glam::Vec3::ZERO,
+        rotation,
     };
 
     out.update();

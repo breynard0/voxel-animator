@@ -12,3 +12,7 @@ pub const VBO_ATTRIBS: [wgpu::VertexAttribute; 2] =
     wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x4];
 
 pub const ZOOM_SENS: f32 = 0.2;
+
+pub const ROT_SENS: f32 = 500.0;
+
+pub const ROT_CLAMP: f32 = (std::f32::consts::PI / 2.0) * 0.999;

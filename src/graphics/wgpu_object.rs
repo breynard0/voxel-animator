@@ -40,21 +40,32 @@ impl WgpuObject {
     }
 
     pub fn update(&mut self) {
+        let mut cam_changed = false;
+
         if input::is_mouse_button_down(input::InputMouseButton::Middle) {
-            let speed = 400.0;
-            let x = -input::get_mouse_delta_range(self.size).1 * self.delta_time * speed;
-            let y = -input::get_mouse_delta_range(self.size).0 * self.delta_time * speed;
+            let speed = crate::utils::consts::ROT_SENS;
+            let x = -input::get_mouse_delta_range(self.size).0 * self.delta_time * speed;
+            let y = -input::get_mouse_delta_range(self.size).1 * self.delta_time * speed;
 
             self.rotation.x += x;
             self.rotation.y += y;
 
-            let rotmats = transform::rot_mat(self.rotation.x, self.rotation.y, self.rotation.z);
+            self.rotation = transform::clamped_rotation(&self, crate::utils::consts::ROT_CLAMP);
 
-            let eye = rotmats.0 * glam::Vec4::ONE;
-            let eye = rotmats.1.transpose() * eye;
-            let eye = rotmats.2.transpose() * eye;
-            self.cam.eye = cgmath::point3(eye.x, eye.y, eye.z);
-            
+            let rot = self.rotation;
+
+            self.cam.eye = cgmath::point3(
+                -(-rot.x).sin() * (rot.y).cos(),
+                -(rot.y).sin(),
+                (-rot.x).cos() * (rot.y).cos(),
+            );
+
+            self.cam.rebuild_up();
+
+            cam_changed = true;
+        }
+        
+        if cam_changed {
             self.cam_staging_buf = Some(self.cam.create_staging_buffer(&self.device))
         }
 
@@ -65,8 +76,10 @@ impl WgpuObject {
                 Some(self.transform_uniform.create_staging_buffer(&self.device));
         }
 
-        // self.vertex_buffer = super::vertex::new_vbo(&self.device, self.rotation);
+        self.rotation = transform::clamped_rotation(&self, crate::utils::consts::ROT_CLAMP);
+
         super::msaa::rebuild_msaa(self);
+
         if input::is_key_pressed(winit::event::VirtualKeyCode::F1) {
             self.wireframe = !self.wireframe;
             let vib = vertex::create_buffers(&self.device, self.wireframe);

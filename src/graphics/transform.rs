@@ -3,14 +3,11 @@ use wgpu::util::DeviceExt;
 
 use crate::utils::consts;
 
-use super::vertex;
+use super::{vertex, wgpu_object::WgpuObject};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TransformUniform {
-    // pub rot_mat_x: [[f32; 4]; 4],
-    // pub rot_mat_y: [[f32; 4]; 4],
-    // pub rot_mat_z: [[f32; 4]; 4],
     pub zoom: f32,
     zoom_factor: f32,
     pub offset: [f32; 2],
@@ -18,13 +15,8 @@ pub struct TransformUniform {
 
 impl Default for TransformUniform {
     fn default() -> Self {
-        let rot_mats = rot_mat(0.0, 0.0, 0.0);
-
         Self {
-            // rot_mat_x: rot_mats.0.to_cols_array_2d(),
-            // rot_mat_y: rot_mats.1.to_cols_array_2d(),
-            // rot_mat_z: rot_mats.2.to_cols_array_2d(),
-            zoom: 1.0,
+            zoom: -5.0,
             offset: Default::default(),
             zoom_factor: 0.0,
         }
@@ -41,6 +33,22 @@ impl TransformUniform {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_SRC,
         })
     }
+}
+
+pub fn clamped_rotation(wobj: &WgpuObject, clamp: f32) -> glam::Vec3 {
+    wobj.rotation.clamp(
+        glam::vec3(f32::NEG_INFINITY, -clamp, f32::NEG_INFINITY),
+        glam::vec3(f32::INFINITY, clamp, f32::INFINITY),
+    )
+}
+
+pub fn trans_mat(x: f32, y: f32, z: f32) -> glam::Mat4 {
+    mat4(
+        vec4(1.0, 0.0, 0.0, 0.0),
+        vec4(0.0, 1.0, 0.0, 0.0),
+        vec4(0.0, 0.0, 1.0, 0.0),
+        vec4(x, y, z, 1.0),
+    )
 }
 
 pub fn translate(vertices: &Vec<vertex::Vertex>, translation: glam::Vec3) -> Vec<vertex::Vertex> {

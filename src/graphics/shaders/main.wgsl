@@ -30,17 +30,7 @@ fn vs_main(
     model: VertexInput,
 ) -> VertexOutput {
     var out: VertexOutput;
-    // let new_pos: vec3<f32> = vec3<f32>(
-    //         model.position.x * (transform.zoom * (model.position.x / abs(model.position.x))),
-    //         model.position.y * (transform.zoom * (model.position.y / abs(model.position.y))),
-    //         model.position.z * (transform.zoom * (model.position.z / abs(model.position.z)))
-    //     );
-
-    // let pos_x = vec4((model.position * transform.zoom_factor), 0.0) * (transform.rot_mat_x);
-    // let pos_y = vec4((model.position * transform.zoom_factor), 0.0) * (transform.rot_mat_y);
-    // let pos_z = vec4((model.position * transform.zoom_factor), 0.0) * (transform.rot_mat_z);
     
-    // out.clip_position = camera.view_proj * vec4<f32>(vec3(pos_x.x, pos_y.y, (length(pos_x)+length(pos_y)) / 2.0), 1.0);
     out.clip_position = camera.view_proj * vec4<f32>(model.position * transform.zoom_factor, 1.0);
     out.color = model.color;
     return out;
