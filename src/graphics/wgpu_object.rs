@@ -28,7 +28,8 @@ pub struct WgpuObject {
     pub msaa_bundle: wgpu::RenderBundle,
     pub depth_texture: super::texture::Texture,
     pub wireframe: bool,
-    pub rotation: glam::Vec3,
+    pub cam_rotation: glam::Vec3,
+    pub cam_pos: glam::Vec3,
     pub delta_time: f32,
 }
 
@@ -40,32 +41,35 @@ impl WgpuObject {
     }
 
     pub fn update(&mut self) {
-        let mut cam_changed = false;
-
         if input::is_mouse_button_down(input::InputMouseButton::Middle) {
-            let speed = crate::utils::consts::ROT_SENS;
-            let x = -input::get_mouse_delta_range(self.size).0 * self.delta_time * speed;
-            let y = -input::get_mouse_delta_range(self.size).1 * self.delta_time * speed;
+            let x = input::get_mouse_delta_range(self.size).0 * self.delta_time;
+            let y = input::get_mouse_delta_range(self.size).1 * self.delta_time;
+            
+            match input::is_shift_down() {
+                // Pan
+                true => {
+                    let speed = crate::utils::consts::PAN_SENS;
+                    let x = -x * speed;
+                    let y = y * speed;
 
-            self.rotation.x += x;
-            self.rotation.y += y;
+                    let translation = self.cam.get_right() * x + self.cam.up * y;
+                    self.cam_pos += glam::vec3(translation.x, translation.y, translation.z);
+                }
+                // Orbit
+                false => {
+                    let speed = crate::utils::consts::ROT_SENS;
+                    let x = x * speed;
+                    let y = y * speed;
 
-            self.rotation = transform::clamped_rotation(&self, crate::utils::consts::ROT_CLAMP);
+                    self.cam_rotation.x += x;
+                    self.cam_rotation.y += y;
 
-            let rot = self.rotation;
+                    self.cam_rotation =
+                        transform::clamped_rotation(&self, crate::utils::consts::ROT_CLAMP);
+                }
+            }
 
-            self.cam.eye = cgmath::point3(
-                -(-rot.x).sin() * (rot.y).cos(),
-                -(rot.y).sin(),
-                (-rot.x).cos() * (rot.y).cos(),
-            );
-
-            self.cam.rebuild_up();
-
-            cam_changed = true;
-        }
-        
-        if cam_changed {
+            self.cam.apply_transforms(&self.cam_rotation, &self.cam_pos);
             self.cam_staging_buf = Some(self.cam.create_staging_buffer(&self.device))
         }
 
@@ -76,7 +80,7 @@ impl WgpuObject {
                 Some(self.transform_uniform.create_staging_buffer(&self.device));
         }
 
-        self.rotation = transform::clamped_rotation(&self, crate::utils::consts::ROT_CLAMP);
+        self.cam_rotation = transform::clamped_rotation(&self, crate::utils::consts::ROT_CLAMP);
 
         super::msaa::rebuild_msaa(self);
 

@@ -36,7 +36,7 @@ impl TransformUniform {
 }
 
 pub fn clamped_rotation(wobj: &WgpuObject, clamp: f32) -> glam::Vec3 {
-    wobj.rotation.clamp(
+    wobj.cam_rotation.clamp(
         glam::vec3(f32::NEG_INFINITY, -clamp, f32::NEG_INFINITY),
         glam::vec3(f32::INFINITY, clamp, f32::INFINITY),
     )

@@ -23,6 +23,9 @@ static mut LAST_MOUSE_POS: PhysicalPosition<f64> = PhysicalPosition::new(0.0, 0.
 
 static mut MOUSE_SCROLL_LAST: f32 = 0.0;
 
+static mut SHIFT_DOWN: bool = false;
+static mut CTRL_DOWN: bool = false;
+static mut ALT_DOWN: bool = false;
 pub fn poll_keyboard_event(event: &winit::event::KeyboardInput) {
     let key = match event.virtual_keycode {
         Some(k) => k,
@@ -69,6 +72,14 @@ pub fn poll_scroll_wheel(delta: &MouseScrollDelta) {
             MouseScrollDelta::LineDelta(_, y) => *y,
             MouseScrollDelta::PixelDelta(x) => x.y as f32,
         }
+    }
+}
+
+pub fn poll_modifiers(shift: bool, ctrl: bool, alt: bool) {
+    unsafe {
+        SHIFT_DOWN = shift;
+        CTRL_DOWN = ctrl;
+        ALT_DOWN = alt;
     }
 }
 
@@ -161,4 +172,16 @@ pub fn get_mouse_delta_range(window_size: PhysicalSize<u32>) -> (f32, f32) {
 
 pub fn get_scroll_delta() -> f32 {
     unsafe { MOUSE_SCROLL_LAST }
+}
+
+pub fn is_shift_down() -> bool {
+    unsafe { SHIFT_DOWN }
+}
+
+pub fn is_ctrl_down() -> bool {
+    unsafe { CTRL_DOWN }
+}
+
+pub fn is_alt_down() -> bool {
+    unsafe { ALT_DOWN }
 }

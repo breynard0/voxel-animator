@@ -34,6 +34,7 @@ pub async fn run() {
             window_id: queried_window_id,
         } if queried_window_id == window_id => match event {
             WindowEvent::KeyboardInput { input, .. } => input::poll_keyboard_event(input),
+            WindowEvent::ModifiersChanged(m) => input::poll_modifiers(m.shift(), m.ctrl(), m.alt()),
             WindowEvent::MouseInput { button, state, .. } => {
                 input::poll_mousebutton_event(button, state)
             }

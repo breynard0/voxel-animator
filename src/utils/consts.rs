@@ -16,3 +16,5 @@ pub const ZOOM_SENS: f32 = 0.2;
 pub const ROT_SENS: f32 = 500.0;
 
 pub const ROT_CLAMP: f32 = (std::f32::consts::PI / 2.0) * 0.999;
+
+pub const PAN_SENS: f32 = 100.0;

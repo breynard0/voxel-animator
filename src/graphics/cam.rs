@@ -1,3 +1,4 @@
+use cgmath::InnerSpace;
 use wgpu::util::DeviceExt;
 
 use crate::utils::consts::*;
@@ -32,13 +33,32 @@ impl Camera {
         })
     }
 
+    pub fn apply_transforms(&mut self, rot: &glam::Vec3, pos: &glam::Vec3) {
+        let rot = rot;
+
+        let rotation = cgmath::point3(
+            (-rot.x).sin() * (rot.y).cos(),
+            (rot.y).sin(),
+            (-rot.x).cos() * (rot.y).cos(),
+        );
+
+        self.eye = rotation + cgmath::vec3(pos.x, pos.y, pos.z);
+        self.target = cgmath::point3(pos.x, pos.y, pos.z);
+
+        self.rebuild_up();
+    }
+
     pub fn rebuild_up(&mut self) {
         let eye = glam::vec3(self.eye.x, self.eye.y, self.eye.z);
         let target = glam::vec3(self.target.x, self.target.y, self.target.z);
         let forward = (target - eye).normalize();
         let right = forward.cross(glam::vec3(0.0, 1.0, 0.0)).normalize();
-        let up = right.cross(forward);
+        let up = right.cross(forward).normalize();
         self.up = cgmath::vec3(up.x, up.y, up.z);
+    }
+
+    pub fn get_right(&self) -> cgmath::Vector3<f32> {
+        self.up.cross((self.eye - self.target).normalize()).normalize()
     }
 }
 

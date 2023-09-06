@@ -200,7 +200,8 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         depth_texture,
         wireframe,
         delta_time: 0.0,
-        rotation,
+        cam_rotation: rotation,
+        cam_pos: glam::Vec3::ZERO,
     };
 
     out.update();
