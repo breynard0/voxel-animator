@@ -44,7 +44,7 @@ impl WgpuObject {
         if input::is_mouse_button_down(input::InputMouseButton::Middle) {
             let x = input::get_mouse_delta_range(self.size).0 * self.delta_time;
             let y = input::get_mouse_delta_range(self.size).1 * self.delta_time;
-            
+
             match input::is_shift_down() {
                 // Pan
                 true => {

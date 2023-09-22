@@ -6,15 +6,16 @@ use crate::models::model;
 use crate::utils::consts::*;
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Pod, Zeroable)]
+#[derive(Clone, Copy, Debug, Pod, Zeroable, Default)]
 pub struct Vertex {
     pub pos: [f32; 3],
     pub color: [f32; 4],
+    pub normal: [f32; 3],
 }
 
 impl Vertex {
-    pub fn new(pos: [f32; 3], color: [f32; 4]) -> Self {
-        Self { pos, color }
+    pub fn new(pos: [f32; 3], color: [f32; 4], normal: [f32; 3]) -> Self {
+        Self { pos, color, normal }
     }
 }
 

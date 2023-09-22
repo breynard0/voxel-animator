@@ -18,6 +18,7 @@ var<uniform> transform: TransformUniform;
 struct VertexInput {
     @location(0) position: vec3<f32>,
     @location(1) color: vec4<f32>,
+    @location(2) normal: vec3<f32>
 };
 
 struct VertexOutput {
@@ -32,7 +33,7 @@ fn vs_main(
     var out: VertexOutput;
     
     out.clip_position = camera.view_proj * vec4<f32>(model.position * transform.zoom_factor, 1.0);
-    out.color = model.color;
+    out.color = vec4((model.normal+1.0)/2.0, 1.0);
     return out;
 }
 

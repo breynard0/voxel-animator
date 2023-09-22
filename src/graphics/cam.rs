@@ -58,7 +58,9 @@ impl Camera {
     }
 
     pub fn get_right(&self) -> cgmath::Vector3<f32> {
-        self.up.cross((self.eye - self.target).normalize()).normalize()
+        self.up
+            .cross((self.eye - self.target).normalize())
+            .normalize()
     }
 }
 

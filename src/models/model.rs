@@ -104,64 +104,131 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                 let y = layer_num as f32;
                 let z = uz as f32;
 
+                let top_condition = !is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1);
+                let bottom_condition =
+                    !is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1);
+                let right_condition = !is_filled_at_offset(&model.value, x, z, layer_num, 1, 0, 0);
+                let left_condition = !is_filled_at_offset(&model.value, x, z, layer_num, -1, 0, 0);
+                let front_condition = !is_filled_at_offset(&model.value, x, z, layer_num, 0, 1, 0);
+                let back_condition = !is_filled_at_offset(&model.value, x, z, layer_num, 0, -1, 0);
+
                 // Push vertices
-                vertices.push(Vertex::new(
+                let left_up_back = Vertex::new(
                     [x, y + 1., z],
                     layer.value[ux][uz].material.color.into(),
-                ));
-                vertices.push(Vertex::new(
+                    get_normal(
+                        [0.0, 1.0, 0.0],
+                        left_condition,
+                        back_condition,
+                        is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1),
+                    ),
+                );
+                let left_up_front = Vertex::new(
                     [x, y + 1., z + 1.],
                     layer.value[ux][uz].material.color.into(),
-                ));
-                vertices.push(Vertex::new(
+                    get_normal(
+                        [0.0, 1.0, 1.0],
+                        left_condition,
+                        front_condition,
+                        is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1),
+                    ),
+                );
+                let right_up_front = Vertex::new(
                     [x + 1., y + 1., z + 1.],
                     layer.value[ux][uz].material.color.into(),
-                ));
-                vertices.push(Vertex::new(
+                    get_normal(
+                        [1.0, 1.0, 1.0],
+                        right_condition,
+                        front_condition,
+                        is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1),
+                    ),
+                );
+                let right_up_back = Vertex::new(
                     [x + 1., y + 1., z],
                     layer.value[ux][uz].material.color.into(),
-                ));
-                vertices.push(Vertex::new(
+                    get_normal(
+                        [1.0, 1.0, 0.0],
+                        right_condition,
+                        back_condition,
+                        is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1),
+                    ),
+                );
+                let left_down_back = Vertex::new(
                     [x, y, z],
                     layer.value[ux][uz].material.color.into(),
-                ));
-                vertices.push(Vertex::new(
+                    get_normal(
+                        [0.0, 0.0, 0.0],
+                        left_condition,
+                        back_condition,
+                        is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1),
+                    ),
+                );
+                let left_down_front = Vertex::new(
                     [x, y, z + 1.],
                     layer.value[ux][uz].material.color.into(),
-                ));
-                vertices.push(Vertex::new(
+                    get_normal(
+                        [0.0, 0.0, 1.0],
+                        left_condition,
+                        front_condition,
+                        is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1),
+                    ),
+                );
+                let right_down_front = Vertex::new(
                     [x + 1., y, z + 1.],
                     layer.value[ux][uz].material.color.into(),
-                ));
-                vertices.push(Vertex::new(
+                    get_normal(
+                        [1.0, 0.0, 1.0],
+                        right_condition,
+                        front_condition,
+                        is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1),
+                    ),
+                );
+                let right_down_back = Vertex::new(
                     [x + 1., y, z],
                     layer.value[ux][uz].material.color.into(),
-                ));
+                    get_normal(
+                        [1.0, 0.0, 0.0],
+                        right_condition,
+                        back_condition,
+                        is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1),
+                    ),
+                );
 
                 // Push culled indices
-                if !is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1) {
-                    push_indices(&mut indices, INDICES_TOP, iteration)
+
+                if top_condition {
+                    push_indices(&mut indices, INDICES_TOP, iteration);
                 }
 
-                if !is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1) {
-                    push_indices(&mut indices, INDICES_BOTTOM, iteration)
+                if bottom_condition {
+                    push_indices(&mut indices, INDICES_BOTTOM, iteration);
                 }
 
-                if !is_filled_at_offset(&model.value, x, z, layer_num, 1, 0, 0) {
-                    push_indices(&mut indices, INDICES_RIGHT, iteration)
+                if right_condition {
+                    push_indices(&mut indices, INDICES_RIGHT, iteration);
                 }
 
-                if !is_filled_at_offset(&model.value, x, z, layer_num, -1, 0, 0) {
-                    push_indices(&mut indices, INDICES_LEFT, iteration)
+                if left_condition {
+                    push_indices(&mut indices, INDICES_LEFT, iteration);
                 }
 
-                if !is_filled_at_offset(&model.value, x, z, layer_num, 0, 1, 0) {
-                    push_indices(&mut indices, INDICES_FRONT, iteration)
+                if front_condition {
+                    push_indices(&mut indices, INDICES_FRONT, iteration);
                 }
 
-                if !is_filled_at_offset(&model.value, x, z, layer_num, 0, -1, 0) {
-                    push_indices(&mut indices, INDICES_BACK, iteration)
+                if back_condition {
+                    push_indices(&mut indices, INDICES_BACK, iteration);
                 }
+
+                // Push vertices
+                vertices.push(left_up_back);
+                vertices.push(left_up_front);
+                vertices.push(right_up_front);
+                vertices.push(right_up_back);
+                vertices.push(left_down_back);
+                vertices.push(left_down_front);
+                vertices.push(right_down_front);
+                vertices.push(right_down_back);
 
                 iteration += 1;
             }
@@ -217,4 +284,39 @@ fn push_indices(vector: &mut Vec<u32>, indices: &[u32], iter: u32) {
     vector.push(indices[3] + (iter * 8));
     vector.push(indices[4] + (iter * 8));
     vector.push(indices[5] + (iter * 8));
+}
+
+fn get_normal(normal: [f32; 3], adj1: bool, adj2: bool, vertical: bool) -> [f32; 3] {
+    let mut normal = glam::Vec3::from_array(normal);
+    if normal.x == 0.0 {
+        normal.x = -1.0
+    }
+    if normal.y == 0.0 {
+        normal.y = -1.0
+    }
+    if normal.z == 0.0 {
+        normal.z = -1.0
+    }
+
+    // Vertices
+    if adj1 && adj2 && !vertical {
+        return normal.normalize().to_array();
+    }
+
+    // Edges
+    if adj1 || adj2 {
+        if adj1 {
+            // Left/Right
+            return glam::vec3(normal.x, normal.y, 0.0).normalize().to_array();
+        } else if adj2 {
+            // Forwards/Backwards
+            return glam::vec3(0.0, normal.y, normal.z).normalize().to_array();
+        } else if vertical {
+            // Up/Down
+            return glam::vec3(normal.x, 0.0, normal.z).normalize().to_array();
+        }
+    }
+
+    // Internals
+    return glam::vec3(0.0, normal.y, 0.0).normalize().to_array();
 }

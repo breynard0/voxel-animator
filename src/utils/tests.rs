@@ -164,6 +164,7 @@ fn matrix_application_translation() {
     let vertex = Vertex {
         pos: [3., 7., 1.],
         color: [1., 1., 1., 1.],
+        ..Default::default()
     };
     let matrix = glam::mat4(
         glam::vec4(1., 0., 0., 0.),
@@ -187,6 +188,7 @@ fn matrix_application_scaling() {
     let vertex = Vertex {
         pos: [3., 7., 1.],
         color: [1., 1., 1., 1.],
+        ..Default::default()
     };
     let matrix = glam::mat4(
         glam::vec4(6., 0., 0., 0.),
@@ -208,6 +210,7 @@ fn matrix_application_rotation() {
     let vertex = Vertex {
         pos: [3., 7., 1.],
         color: [1., 1., 1., 1.],
+        ..Default::default()
     };
     let angle: f32 = 30.0;
     let matrix = glam::mat4(
