@@ -23,7 +23,7 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) color: vec4<f32>,
+    @location(0) @interpolate(linear) color: vec4<f32>,
 };
 
 @vertex
@@ -33,7 +33,7 @@ fn vs_main(
     var out: VertexOutput;
     
     out.clip_position = camera.view_proj * vec4<f32>(model.position * transform.zoom_factor, 1.0);
-    out.color = vec4((model.normal+1.0)/2.0, 1.0);
+    out.color = model.color;
     return out;
 }
 
