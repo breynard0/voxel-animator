@@ -21,38 +21,38 @@ pub fn get_model() -> Model {
     Model {
         label: "QuarterPyramid",
         value: vec![
-            // Layer {
-            //     label: "layer_1",
-            //     value: vec![
-            //         vec![
-            //             Voxel::new(true, MAT),
-            //             Voxel::new(true, MAT2),
-            //             Voxel::new(true, MAT),
-            //         ],
-            //         vec![
-            //             Voxel::new(true, MAT2),
-            //             Voxel::new(true, MAT),
-            //             Voxel::new(true, MAT2),
-            //         ],
-            //         vec![
-            //             Voxel::new(true, MAT),
-            //             Voxel::new(true, MAT2),
-            //             Voxel::new(true, MAT),
-            //         ],
-            //     ],
-            // },
-            // Layer {
-            //     label: "layer_2",
-            //     value: vec![
-            //         vec![Voxel::new(true, MAT), Voxel::new(true, MAT2)],
-            //         vec![Voxel::new(true, MAT2), Voxel::new(true, MAT)],
-            //     ],
-            // },
+            Layer {
+                label: "layer_1",
+                value: vec![
+                    vec![
+                        Voxel::new(true, MAT),
+                        Voxel::new(true, MAT2),
+                        Voxel::new(true, MAT),
+                    ],
+                    vec![
+                        Voxel::new(true, MAT2),
+                        Voxel::new(true, MAT),
+                        Voxel::new(true, MAT2),
+                    ],
+                    vec![
+                        Voxel::new(true, MAT),
+                        Voxel::new(true, MAT2),
+                        Voxel::new(true, MAT),
+                    ],
+                ],
+            },
+            Layer {
+                label: "layer_2",
+                value: vec![
+                    vec![Voxel::new(true, MAT), Voxel::new(true, MAT2)],
+                    vec![Voxel::new(true, MAT2), Voxel::new(true, MAT)],
+                ],
+            },
             Layer {
                 label: "layer_3",
                 value: vec![
                     vec![Voxel::new(true, MAT2), Voxel::new(false, MAT)],
-                    vec![Voxel::new(true, MAT), Voxel::new(true, MAT)],
+                    vec![Voxel::new(false, MAT), Voxel::new(true, MAT)],
                 ],
             },
         ],
@@ -98,11 +98,10 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
     ];
 
     let mut layer_num = 0;
-    // let mut culled = 0;
+    let mut offset = 0;
     let mut culled = vec![];
 
     for layer in &model.value {
-        // println!("{:?}", layer);
         // Sides
         for ux in 0..layer.value.len() {
             for uz in 0..layer.value[ux].len() {
@@ -236,8 +235,6 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                     .position(|v: &Vertex| v.pos == right_down_back.pos);
 
                 // Represents vertex size afterwards
-                let offset = vertices.len() as u32;
-                println!("Vertices size before: {:?}", vertices.len());
 
                 // Push vertices
                 // The value of the index it's REPLACING must be appeneded to 'culled'
@@ -318,7 +315,6 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                     },
                 ];
 
-                // let culled = vec![8, 9, 12, 13, 15, 16, 20];
                 if top_condition {
                     push_indices(&mut indices, INDICES_TOP, offset, &culled, duplicate_list);
                 }
@@ -349,25 +345,17 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                     push_indices(&mut indices, INDICES_BACK, offset, &culled, duplicate_list);
                 }
 
-                // culled += _duplicates;
-                // println!(
-                //     "Culled this frame: {:?} Cumulative: {:?}",
-                //     _duplicates, culled
-                // );
-
-                println!("Vertices size after: {:?}", vertices.len());
+                // Lines up with the INITIAL indices, NOT the transformed ones
+                offset += 8;
             }
         }
 
         layer_num += 1;
     }
 
-    // let collected = indices.chunks(3).collect::<Vec<_>>();
-    // collected.iter().for_each(|x| println!("{:?}\n", x));
-
     log::log(
         format!(
-            "Mesh created in {:?}ms",
+            "Mesh created and optimized in {:?}ms",
             std::time::Instant::now()
                 .duration_since(pretime)
                 .as_secs_f32()
@@ -375,10 +363,7 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
         ),
         log::LogLevel::INFO,
     );
-    vertices
-        .iter()
-        .enumerate()
-        .for_each(|(u, x)| println!("{}: {:?}", u, x.pos));
+
     (utils::normalize_scale(&vertices, -1.0, 1.0), indices)
 }
 
@@ -420,27 +405,21 @@ fn push_indices(
     duplicate_list: &Vec<i32>,
 ) {
     let offset = index_offset;
-    println!("Offset: {:?}", offset);
-    println!("Culled: {:?}", culled);
-    println!("{:?}", indices);
     let indices = indices
         .iter()
         .map(|i| match duplicate_list[*i as usize] {
             -1 => {
                 let cull = culled
                     .iter()
-                    .filter(|x| **x <= (*i + offset) as usize)
+                    .filter(|x| **x < (*i + offset) as usize)
                     .count() as u32;
-                println!("Same {:?} {:?}", *i + offset, *i + offset as u32 - cull);
                 *i + offset as u32 - cull
             }
             a => {
-                println!("Replaced {:?}", a as u32);
                 a as u32
             }
         })
         .collect::<Vec<_>>();
-    println!("{:?}\n", indices);
 
     vector.push(indices[0]);
     vector.push(indices[1]);
