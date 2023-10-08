@@ -1,4 +1,7 @@
-use crate::{graphics::vertex::Vertex, utils};
+use crate::{
+    graphics::vertex::Vertex,
+    utils::{self, log},
+};
 
 use super::{layer::Layer, material::Material, voxel::Voxel};
 
@@ -10,42 +13,46 @@ pub struct Model {
 const MAT: Material = Material {
     color: glam::vec4(0.3, 0.3, 0.6, 1.0),
 };
+const MAT2: Material = Material {
+    color: glam::vec4(0.6, 0.3, 0.3, 1.0),
+};
+
 pub fn get_model() -> Model {
     Model {
         label: "QuarterPyramid",
         value: vec![
-            Layer {
-                label: "layer_1",
-                value: vec![
-                    vec![
-                        Voxel::new(true, MAT),
-                        Voxel::new(true, MAT),
-                        Voxel::new(true, MAT),
-                    ],
-                    vec![
-                        Voxel::new(true, MAT),
-                        Voxel::new(true, MAT),
-                        Voxel::new(true, MAT),
-                    ],
-                    vec![
-                        Voxel::new(true, MAT),
-                        Voxel::new(true, MAT),
-                        Voxel::new(true, MAT),
-                    ],
-                ],
-            },
-            Layer {
-                label: "layer_2",
-                value: vec![
-                    vec![Voxel::new(true, MAT), Voxel::new(true, MAT)],
-                    vec![Voxel::new(true, MAT), Voxel::new(true, MAT)],
-                ],
-            },
+            // Layer {
+            //     label: "layer_1",
+            //     value: vec![
+            //         vec![
+            //             Voxel::new(true, MAT),
+            //             Voxel::new(true, MAT2),
+            //             Voxel::new(true, MAT),
+            //         ],
+            //         vec![
+            //             Voxel::new(true, MAT2),
+            //             Voxel::new(true, MAT),
+            //             Voxel::new(true, MAT2),
+            //         ],
+            //         vec![
+            //             Voxel::new(true, MAT),
+            //             Voxel::new(true, MAT2),
+            //             Voxel::new(true, MAT),
+            //         ],
+            //     ],
+            // },
+            // Layer {
+            //     label: "layer_2",
+            //     value: vec![
+            //         vec![Voxel::new(true, MAT), Voxel::new(true, MAT2)],
+            //         vec![Voxel::new(true, MAT2), Voxel::new(true, MAT)],
+            //     ],
+            // },
             Layer {
                 label: "layer_3",
                 value: vec![
-                    vec![Voxel::new(true, MAT), Voxel::new(false, MAT)],
-                    vec![Voxel::new(false, MAT), Voxel::new(true, MAT)],
+                    vec![Voxel::new(true, MAT2), Voxel::new(false, MAT)],
+                    vec![Voxel::new(true, MAT), Voxel::new(true, MAT)],
                 ],
             },
         ],
@@ -53,6 +60,7 @@ pub fn get_model() -> Model {
 }
 
 pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
+    let pretime = std::time::Instant::now();
     let mut vertices = vec![];
     let mut indices = vec![];
 
@@ -90,7 +98,9 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
     ];
 
     let mut layer_num = 0;
-    let mut iteration = 0;
+    // let mut culled = 0;
+    let mut culled = vec![];
+
     for layer in &model.value {
         // println!("{:?}", layer);
         // Sides
@@ -123,6 +133,10 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                         is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1),
                     ),
                 );
+                let left_up_back_dup = vertices
+                    .iter()
+                    .position(|v: &Vertex| v.pos == left_up_back.pos);
+
                 let left_up_front = Vertex::new(
                     [x, y + 1., z + 1.],
                     layer.value[ux][uz].material.color.into(),
@@ -133,6 +147,10 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                         is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1),
                     ),
                 );
+                let left_up_front_dup = vertices
+                    .iter()
+                    .position(|v: &Vertex| v.pos == left_up_front.pos);
+
                 let right_up_front = Vertex::new(
                     [x + 1., y + 1., z + 1.],
                     layer.value[ux][uz].material.color.into(),
@@ -143,6 +161,10 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                         is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1),
                     ),
                 );
+                let right_up_front_dup = vertices
+                    .iter()
+                    .position(|v: &Vertex| v.pos == right_up_front.pos);
+
                 let right_up_back = Vertex::new(
                     [x + 1., y + 1., z],
                     layer.value[ux][uz].material.color.into(),
@@ -153,6 +175,10 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                         is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, 1),
                     ),
                 );
+                let right_up_back_dup = vertices
+                    .iter()
+                    .position(|v: &Vertex| v.pos == right_up_back.pos);
+
                 let left_down_back = Vertex::new(
                     [x, y, z],
                     layer.value[ux][uz].material.color.into(),
@@ -163,6 +189,10 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                         is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1),
                     ),
                 );
+                let left_down_back_dup = vertices
+                    .iter()
+                    .position(|v: &Vertex| v.pos == left_down_back.pos);
+
                 let left_down_front = Vertex::new(
                     [x, y, z + 1.],
                     layer.value[ux][uz].material.color.into(),
@@ -173,6 +203,10 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                         is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1),
                     ),
                 );
+                let left_down_front_dup = vertices
+                    .iter()
+                    .position(|v: &Vertex| v.pos == left_down_front.pos);
+
                 let right_down_front = Vertex::new(
                     [x + 1., y, z + 1.],
                     layer.value[ux][uz].material.color.into(),
@@ -183,6 +217,10 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                         is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1),
                     ),
                 );
+                let right_down_front_dup = vertices
+                    .iter()
+                    .position(|v: &Vertex| v.pos == right_down_front.pos);
+
                 let right_down_back = Vertex::new(
                     [x + 1., y, z],
                     layer.value[ux][uz].material.color.into(),
@@ -193,57 +231,154 @@ pub fn gen_vert_idx(model: &Model) -> (Vec<Vertex>, Vec<u32>) {
                         is_filled_at_offset(&model.value, x, z, layer_num, 0, 0, -1),
                     ),
                 );
+                let right_down_back_dup = vertices
+                    .iter()
+                    .position(|v: &Vertex| v.pos == right_down_back.pos);
+
+                // Represents vertex size afterwards
+                let offset = vertices.len() as u32;
+                println!("Vertices size before: {:?}", vertices.len());
+
+                // Push vertices
+                // The value of the index it's REPLACING must be appeneded to 'culled'
+                if left_up_back_dup.is_none() {
+                    vertices.push(left_up_back);
+                } else {
+                    utils::push_if_absent(&mut culled, (0 + offset) as usize)
+                }
+                if left_up_front_dup.is_none() {
+                    vertices.push(left_up_front);
+                } else {
+                    utils::push_if_absent(&mut culled, (1 + offset) as usize)
+                }
+                if right_up_front_dup.is_none() {
+                    vertices.push(right_up_front);
+                } else {
+                    utils::push_if_absent(&mut culled, (2 + offset) as usize)
+                }
+                if right_up_back_dup.is_none() {
+                    vertices.push(right_up_back);
+                } else {
+                    utils::push_if_absent(&mut culled, (3 + offset) as usize)
+                }
+                if left_down_back_dup.is_none() {
+                    vertices.push(left_down_back);
+                } else {
+                    utils::push_if_absent(&mut culled, (4 + offset) as usize)
+                }
+                if left_down_front_dup.is_none() {
+                    vertices.push(left_down_front);
+                } else {
+                    utils::push_if_absent(&mut culled, (5 + offset) as usize)
+                }
+                if right_down_front_dup.is_none() {
+                    vertices.push(right_down_front);
+                } else {
+                    utils::push_if_absent(&mut culled, (6 + offset) as usize)
+                }
+                if right_down_back_dup.is_none() {
+                    vertices.push(right_down_back);
+                } else {
+                    utils::push_if_absent(&mut culled, (7 + offset) as usize)
+                }
 
                 // Push culled indices
+                let duplicate_list = &vec![
+                    match left_up_back_dup {
+                        Some(v) => v as i32,
+                        None => -1,
+                    },
+                    match left_up_front_dup {
+                        Some(v) => v as i32,
+                        None => -1,
+                    },
+                    match right_up_front_dup {
+                        Some(v) => v as i32,
+                        None => -1,
+                    },
+                    match right_up_back_dup {
+                        Some(v) => v as i32,
+                        None => -1,
+                    },
+                    match left_down_back_dup {
+                        Some(v) => v as i32,
+                        None => -1,
+                    },
+                    match left_down_front_dup {
+                        Some(v) => v as i32,
+                        None => -1,
+                    },
+                    match right_down_front_dup {
+                        Some(v) => v as i32,
+                        None => -1,
+                    },
+                    match right_down_back_dup {
+                        Some(v) => v as i32,
+                        None => -1,
+                    },
+                ];
 
+                // let culled = vec![8, 9, 12, 13, 15, 16, 20];
                 if top_condition {
-                    push_indices(&mut indices, INDICES_TOP, iteration);
+                    push_indices(&mut indices, INDICES_TOP, offset, &culled, duplicate_list);
                 }
 
                 if bottom_condition {
-                    push_indices(&mut indices, INDICES_BOTTOM, iteration);
+                    push_indices(
+                        &mut indices,
+                        INDICES_BOTTOM,
+                        offset,
+                        &culled,
+                        duplicate_list,
+                    );
                 }
 
                 if right_condition {
-                    push_indices(&mut indices, INDICES_RIGHT, iteration);
+                    push_indices(&mut indices, INDICES_RIGHT, offset, &culled, duplicate_list);
                 }
 
                 if left_condition {
-                    push_indices(&mut indices, INDICES_LEFT, iteration);
+                    push_indices(&mut indices, INDICES_LEFT, offset, &culled, duplicate_list);
                 }
 
                 if front_condition {
-                    push_indices(&mut indices, INDICES_FRONT, iteration);
+                    push_indices(&mut indices, INDICES_FRONT, offset, &culled, duplicate_list);
                 }
 
                 if back_condition {
-                    push_indices(&mut indices, INDICES_BACK, iteration);
+                    push_indices(&mut indices, INDICES_BACK, offset, &culled, duplicate_list);
                 }
 
-                // Push vertices
-                vertices.push(left_up_back);
-                vertices.push(left_up_front);
-                vertices.push(right_up_front);
-                vertices.push(right_up_back);
-                vertices.push(left_down_back);
-                vertices.push(left_down_front);
-                vertices.push(right_down_front);
-                vertices.push(right_down_back);
+                // culled += _duplicates;
+                // println!(
+                //     "Culled this frame: {:?} Cumulative: {:?}",
+                //     _duplicates, culled
+                // );
 
-                iteration += 1;
+                println!("Vertices size after: {:?}", vertices.len());
             }
         }
 
         layer_num += 1;
     }
 
-    // let indices = INDICES
-    //     .iter()
-    //     .cycle()
-    //     .take(1
-    //     .map(|(idx, val)| val + ((idx / 36) * 8) as u32)
-    //     .collect::<Vec<_>>();
+    // let collected = indices.chunks(3).collect::<Vec<_>>();
+    // collected.iter().for_each(|x| println!("{:?}\n", x));
 
+    log::log(
+        format!(
+            "Mesh created in {:?}ms",
+            std::time::Instant::now()
+                .duration_since(pretime)
+                .as_secs_f32()
+                * 1000.0
+        ),
+        log::LogLevel::INFO,
+    );
+    vertices
+        .iter()
+        .enumerate()
+        .for_each(|(u, x)| println!("{}: {:?}", u, x.pos));
     (utils::normalize_scale(&vertices, -1.0, 1.0), indices)
 }
 
@@ -277,13 +412,42 @@ fn is_filled_at_offset(
     c.filled
 }
 
-fn push_indices(vector: &mut Vec<u32>, indices: &[u32], iter: u32) {
-    vector.push(indices[0] + (iter * 8));
-    vector.push(indices[1] + (iter * 8));
-    vector.push(indices[2] + (iter * 8));
-    vector.push(indices[3] + (iter * 8));
-    vector.push(indices[4] + (iter * 8));
-    vector.push(indices[5] + (iter * 8));
+fn push_indices(
+    vector: &mut Vec<u32>,
+    indices: &[u32],
+    index_offset: u32,
+    culled: &Vec<usize>,
+    duplicate_list: &Vec<i32>,
+) {
+    let offset = index_offset;
+    println!("Offset: {:?}", offset);
+    println!("Culled: {:?}", culled);
+    println!("{:?}", indices);
+    let indices = indices
+        .iter()
+        .map(|i| match duplicate_list[*i as usize] {
+            -1 => {
+                let cull = culled
+                    .iter()
+                    .filter(|x| **x <= (*i + offset) as usize)
+                    .count() as u32;
+                println!("Same {:?} {:?}", *i + offset, *i + offset as u32 - cull);
+                *i + offset as u32 - cull
+            }
+            a => {
+                println!("Replaced {:?}", a as u32);
+                a as u32
+            }
+        })
+        .collect::<Vec<_>>();
+    println!("{:?}\n", indices);
+
+    vector.push(indices[0]);
+    vector.push(indices[1]);
+    vector.push(indices[2]);
+    vector.push(indices[3]);
+    vector.push(indices[4]);
+    vector.push(indices[5]);
 }
 
 fn get_normal(normal: [f32; 3], adj1: bool, adj2: bool, vertical: bool) -> [f32; 3] {

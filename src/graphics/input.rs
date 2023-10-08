@@ -59,7 +59,10 @@ pub fn poll_mousebutton_event(event: &winit::event::MouseButton, state: &Element
         winit::event::MouseButton::Right => mousebutton_ops(InputMouseButton::Right, state),
         winit::event::MouseButton::Middle => mousebutton_ops(InputMouseButton::Middle, state),
         winit::event::MouseButton::Other(_) => {
-            log::log("Auxiliary mouse buttons are currently unsupported", log::LogLevel::WARNING);
+            log::log(
+                "Auxiliary mouse buttons are currently unsupported",
+                log::LogLevel::WARNING,
+            );
         }
     }
 }

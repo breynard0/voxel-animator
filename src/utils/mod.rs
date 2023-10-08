@@ -1,8 +1,17 @@
 use crate::graphics::vertex::Vertex;
 
 pub mod consts;
-pub mod tests;
 pub mod log;
+pub mod tests;
+
+pub fn push_if_absent<T>(vector: &mut Vec<T>, element: T)
+where
+    T: PartialEq,
+{
+    if !vector.contains(&element) {
+        vector.push(element);
+    }
+}
 
 pub fn normalize_scale(vertices: &Vec<Vertex>, min: f32, max: f32) -> Vec<Vertex> {
     let mut max_x: f32 = 0.0;
