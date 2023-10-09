@@ -1,7 +1,7 @@
 use bytemuck::*;
 use wgpu::{util::DeviceExt, Buffer};
 
-use crate::models::model;
+use crate::models::{model, regen};
 
 use crate::utils::consts::*;
 
@@ -27,7 +27,7 @@ pub struct BufferOutput {
 }
 
 pub fn new_vbo(device: &wgpu::Device) -> wgpu::Buffer {
-    let model = model::gen_vert_idx(&model::get_model());
+    let model = regen::gen_vert_idx(&model::get_model());
 
     let vertices = model.0;
 
@@ -48,7 +48,7 @@ pub fn vertex_buffer_layout() -> wgpu::VertexBufferLayout<'static> {
 }
 
 pub fn create_buffers(device: &wgpu::Device, wireframe: bool) -> BufferOutput {
-    let model = model::gen_vert_idx(&model::get_model());
+    let model = regen::gen_vert_idx(&model::get_model());
 
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("VertexBuffer"),

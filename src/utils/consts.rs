@@ -18,3 +18,36 @@ pub const ROT_SENS: f32 = 500.0;
 pub const ROT_CLAMP: f32 = (std::f32::consts::PI / 2.0) * 0.999;
 
 pub const PAN_SENS: f32 = 100.0;
+
+#[rustfmt::skip]
+pub const INDICES_TOP: &[u32] = &[
+    0, 1, 3,
+    3, 1, 2
+];
+
+#[rustfmt::skip]
+pub const INDICES_BOTTOM: &[u32] = &[
+    4, 5, 7,
+    5, 6, 7
+];
+
+#[rustfmt::skip]
+pub const INDICES_FRONT: &[u32] = &[
+    1, 5, 2,
+    5, 6, 2
+];
+#[rustfmt::skip]
+pub const INDICES_BACK: &[u32] = &[
+    4, 7, 3,
+    0, 4, 3
+];
+#[rustfmt::skip]
+pub const INDICES_LEFT: &[u32] = &[
+    0, 1, 4,
+    4, 5, 1
+];
+#[rustfmt::skip]
+pub const INDICES_RIGHT: &[u32] = &[
+    7, 6, 2,
+    7, 2, 3
+];
