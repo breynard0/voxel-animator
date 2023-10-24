@@ -13,11 +13,13 @@ pub const VBO_ATTRIBS: [wgpu::VertexAttribute; 3] =
 
 pub const ZOOM_SENS: f32 = 0.2;
 
-pub const ROT_SENS: f32 = 500.0;
+pub const ROT_SENS: f32 = 1000.0;
 
-pub const ROT_CLAMP: f32 = (std::f32::consts::PI / 2.0) * 0.999;
+pub const ROT_SENS_THROTTLE: f32 = 0.2;
 
 pub const PAN_SENS: f32 = 100.0;
+
+pub const PAN_SENS_THROTTLE: f32 = 0.2;
 
 #[rustfmt::skip]
 pub const INDICES_TOP: &[u32] = &[

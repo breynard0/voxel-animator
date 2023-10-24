@@ -1,4 +1,6 @@
-use cgmath::InnerSpace;
+use std::f32::consts::PI;
+
+use cgmath::Matrix;
 use wgpu::util::DeviceExt;
 
 use crate::utils::consts::*;
@@ -16,10 +18,31 @@ pub struct Camera {
 
 impl Camera {
     pub fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
-        let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
+        let view = self.get_view_matrix();
+
         let proj = cgmath::perspective(cgmath::Deg(self.fovy), self.aspect, self.znear, self.zfar);
 
         return OPENGL_TO_WGPU_MATRIX * proj * view;
+    }
+
+    pub fn get_view_matrix(&self) -> cgmath::Matrix4<f32> {
+        let eye = glam::vec3(self.eye.x, self.eye.y, self.eye.z);
+
+        let r = self.get_right();
+        let u = glam::vec3(self.up.x, self.up.y, self.up.z);
+        let f = self.get_forward();
+
+        let tx = eye.dot(r);
+        let ty = eye.dot(u);
+        let tz = eye.dot(f);
+
+        cgmath::Matrix4 {
+            x: cgmath::vec4(r.x, r.y, r.z, tx),
+            y: cgmath::vec4(u.x, u.y, u.z, ty),
+            z: cgmath::vec4(f.x, f.y, f.z, tz),
+            w: cgmath::vec4(0.0, 0.0, 0.0, 1.0),
+        }
+        .transpose()
     }
 
     pub fn create_staging_buffer(&self, device: &wgpu::Device) -> wgpu::Buffer {
@@ -38,30 +61,42 @@ impl Camera {
 
         let rotation = cgmath::point3(
             (-rot.x).sin() * (rot.y).cos(),
-            (rot.y).sin(),
+            -(rot.y).sin(),
             (-rot.x).cos() * (rot.y).cos(),
         );
 
         self.eye = rotation + cgmath::vec3(pos.x, pos.y, pos.z);
         self.target = cgmath::point3(pos.x, pos.y, pos.z);
 
-        self.rebuild_up();
+        self.rebuild_up(rot.y);
     }
 
-    pub fn rebuild_up(&mut self) {
-        let eye = glam::vec3(self.eye.x, self.eye.y, self.eye.z);
-        let target = glam::vec3(self.target.x, self.target.y, self.target.z);
-        let forward = (target - eye).normalize();
-        let right = forward.cross(glam::vec3(0.0, 1.0, 0.0)).normalize();
+    pub fn rebuild_up(&mut self, yrot: f32) {
+        let forward = self.get_forward();
+        let temp_up = match yrot.abs() > (PI / 2.0) {
+            true => glam::vec3(0.0, -1.0, 0.0),
+            false => glam::vec3(0.0, 1.0, 0.0),
+        };
+        let right = forward.cross(temp_up).normalize();
         let up = right.cross(forward).normalize();
         self.up = cgmath::vec3(up.x, up.y, up.z);
     }
 
-    pub fn get_right(&self) -> cgmath::Vector3<f32> {
-        self.up
-            .cross((self.eye - self.target).normalize())
-            .normalize()
+    pub fn get_forward(&self) -> glam::Vec3 {
+        (glam::vec3(self.target.x, self.target.y, self.target.z))
+            - (glam::vec3(self.eye.x, self.eye.y, self.eye.z).normalize())
     }
+
+    pub fn get_right(&self) -> glam::Vec3 {
+        let up = glam::vec3(self.up.x, self.up.y, self.up.z);
+        up.cross(self.get_forward()).normalize()
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct CamTemp {
+    pub button_held_last_frame: bool,
+    pub cam_flipped: bool,
 }
 
 #[repr(C)]

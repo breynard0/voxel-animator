@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use winit::window::Window;
 
 use super::{cam, init, input, transform, vertex};
@@ -30,6 +32,7 @@ pub struct WgpuObject {
     pub wireframe: bool,
     pub cam_rotation: glam::Vec3,
     pub cam_pos: glam::Vec3,
+    pub cam_temp: cam::CamTemp,
     pub delta_time: f32,
 }
 
@@ -41,36 +44,70 @@ impl WgpuObject {
     }
 
     pub fn update(&mut self) {
+        // Camera movement
         if input::is_mouse_button_down(input::InputMouseButton::Middle) {
             let x = input::get_mouse_delta_range(self.size).0 * self.delta_time;
             let y = input::get_mouse_delta_range(self.size).1 * self.delta_time;
+
+            // Recalculate flip factor if first frame button is held
+            if !self.cam_temp.button_held_last_frame {
+                // Is camera upside down?
+                self.cam_temp.cam_flipped = self.cam_rotation.y < -(PI / 2.0);
+            }
+
+            let throttle = input::is_alt_down();
 
             match input::is_shift_down() {
                 // Pan
                 true => {
                     let speed = crate::utils::consts::PAN_SENS;
-                    let x = -x * speed;
-                    let y = y * speed;
+                    let x = x * speed;
+                    let y = -y * speed;
 
-                    let translation = self.cam.get_right() * x + self.cam.up * y;
+                    let up = glam::vec3(self.cam.up.x, self.cam.up.y, self.cam.up.z);
+                    let translation = self.cam.get_right() * x + up * y;
                     self.cam_pos += glam::vec3(translation.x, translation.y, translation.z);
                 }
                 // Orbit
                 false => {
-                    let speed = crate::utils::consts::ROT_SENS;
-                    let x = x * speed;
+                    let speed = crate::utils::consts::ROT_SENS * match throttle {
+                        true => crate::utils::consts::ROT_SENS_THROTTLE,
+                        false => 1.0,
+                    };
+
+                    let x = x * speed * (!self.cam_temp.cam_flipped as u8 as f32 * 2.0 - 1.0);
+
                     let y = y * speed;
 
-                    self.cam_rotation.x += x;
                     self.cam_rotation.y += y;
 
-                    self.cam_rotation =
-                        transform::clamped_rotation(&self, crate::utils::consts::ROT_CLAMP);
+                    // Roll over when gets to end of range
+                    if self.cam_rotation.y > PI {
+                        self.cam_rotation.y = -PI;
+                    }
+
+                    if self.cam_rotation.y < -PI {
+                        self.cam_rotation.y = PI;
+                    }
+
+                    self.cam_rotation.x += x;
+
+                    if self.cam_rotation.x > PI {
+                        self.cam_rotation.x = -PI;
+                    }
+
+                    if self.cam_rotation.x < -PI {
+                        self.cam_rotation.x = PI;
+                    }
                 }
             }
 
+            // println!("{:?}", self.cam_rotation.to_string());
             self.cam.apply_transforms(&self.cam_rotation, &self.cam_pos);
-            self.cam_staging_buf = Some(self.cam.create_staging_buffer(&self.device))
+            self.cam_staging_buf = Some(self.cam.create_staging_buffer(&self.device));
+            self.cam_temp.button_held_last_frame = true;
+        } else {
+            self.cam_temp.button_held_last_frame = false;
         }
 
         let prezoom = self.transform_uniform.zoom;
@@ -79,8 +116,6 @@ impl WgpuObject {
             self.transform_staging_buf =
                 Some(self.transform_uniform.create_staging_buffer(&self.device));
         }
-
-        self.cam_rotation = transform::clamped_rotation(&self, crate::utils::consts::ROT_CLAMP);
 
         super::msaa::rebuild_msaa(self);
 

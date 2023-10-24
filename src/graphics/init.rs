@@ -202,6 +202,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         delta_time: 0.0,
         cam_rotation: rotation,
         cam_pos: glam::Vec3::ZERO,
+        cam_temp: Default::default(),
     };
 
     out.update();
