@@ -1,9 +1,9 @@
 use std::f32::consts::PI;
 
-use cgmath::Matrix;
+use cgmath::{EuclideanSpace, Matrix};
 use wgpu::util::DeviceExt;
 
-use crate::utils::consts::*;
+use crate::utils::{consts::*, log};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Camera {
@@ -67,6 +67,12 @@ impl Camera {
 
         self.eye = rotation + cgmath::vec3(pos.x, pos.y, pos.z);
         self.target = cgmath::point3(pos.x, pos.y, pos.z);
+
+        log::log_seperated(
+            vec![self.eye.x, self.eye.y, self.eye.z],
+            log::LogLevel::INFO,
+            8,
+        );
 
         self.rebuild_up(rot.y);
     }

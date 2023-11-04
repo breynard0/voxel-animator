@@ -1487,7 +1487,6 @@ dependencies = [
  "chrono",
  "env_logger",
  "glam",
- "log",
  "pollster",
  "wgpu",
  "winit",

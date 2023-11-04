@@ -14,6 +14,8 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
+
+use crate::utils::log::log;
 pub async fn run() {
     env_logger::init();
     let event_loop = EventLoop::new();
@@ -52,9 +54,9 @@ pub async fn run() {
                 Ok(_) => {}
                 Err(wgpu::SurfaceError::Lost) => wgpu_obj.resize(wgpu_obj.size),
                 Err(wgpu::SurfaceError::OutOfMemory) => {
-                    log::error!("Not enough memory to map the next frame!")
+                    log("Not enough memory to map the next frame!", crate::utils::log::LogLevel::ERROR);
                 }
-                Err(e) => log::error!("{}", e.to_string()),
+                Err(e) => log(format!("{}", e.to_string()), crate::utils::log::LogLevel::ERROR),
             }
         }
         Event::MainEventsCleared => {

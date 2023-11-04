@@ -13,7 +13,8 @@ pub const VBO_ATTRIBS: [wgpu::VertexAttribute; 3] =
 
 pub const ZOOM_SENS: f32 = 0.2;
 
-pub const ROT_SENS: f32 = 1000.0;
+pub const ROT_SENS_X: f32 = 800.0;
+pub const ROT_SENS_Y: f32 = 1500.0;
 
 pub const ROT_SENS_THROTTLE: f32 = 0.2;
 

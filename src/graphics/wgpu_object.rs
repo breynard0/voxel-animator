@@ -2,6 +2,11 @@ use std::f32::consts::PI;
 
 use winit::window::Window;
 
+use crate::utils::{
+    cgv3_to_gv3,
+    consts::{ROT_SENS_X, ROT_SENS_Y},
+};
+
 use super::{cam, init, input, transform, vertex};
 
 pub struct WgpuObject {
@@ -64,20 +69,23 @@ impl WgpuObject {
                     let x = x * speed;
                     let y = -y * speed;
 
-                    let up = glam::vec3(self.cam.up.x, self.cam.up.y, self.cam.up.z);
-                    let translation = self.cam.get_right() * x + up * y;
+                    // self.cam.rebuild_up(self.cam_rotation.y);
+                    let translation = self.cam.get_right() * x + cgv3_to_gv3(self.cam.up * y);
                     self.cam_pos += glam::vec3(translation.x, translation.y, translation.z);
                 }
                 // Orbit
                 false => {
-                    let speed = crate::utils::consts::ROT_SENS * match throttle {
+                    let throttle_factor = match throttle {
                         true => crate::utils::consts::ROT_SENS_THROTTLE,
                         false => 1.0,
                     };
 
-                    let x = x * speed * (!self.cam_temp.cam_flipped as u8 as f32 * 2.0 - 1.0);
+                    let x = x
+                        * ROT_SENS_X
+                        * throttle_factor
+                        * (!self.cam_temp.cam_flipped as u8 as f32 * 2.0 - 1.0);
 
-                    let y = y * speed;
+                    let y = y * ROT_SENS_Y * throttle_factor;
 
                     self.cam_rotation.y += y;
 
@@ -102,7 +110,6 @@ impl WgpuObject {
                 }
             }
 
-            // println!("{:?}", self.cam_rotation.to_string());
             self.cam.apply_transforms(&self.cam_rotation, &self.cam_pos);
             self.cam_staging_buf = Some(self.cam.create_staging_buffer(&self.device));
             self.cam_temp.button_held_last_frame = true;

@@ -83,3 +83,19 @@ pub fn normalize_scale(vertices: &Vec<Vertex>, min: f32, max: f32) -> Vec<Vertex
 
     out
 }
+
+pub fn gv3_to_cgv3(input: glam::Vec3) -> cgmath::Vector3<f32> {
+    cgmath::Vector3 {
+        x: input.x,
+        y: input.y,
+        z: input.z,
+    }
+}
+
+pub fn cgv3_to_gv3(input: cgmath::Vector3<f32>) -> glam::Vec3 {
+    glam::Vec3 {
+        x: input.x,
+        y: input.y,
+        z: input.z,
+    }
+}
