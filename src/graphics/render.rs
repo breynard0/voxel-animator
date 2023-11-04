@@ -18,7 +18,7 @@ pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
             resolve_target: None,
             ops: wgpu::Operations {
                 load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                store: true,
+                store: wgpu::StoreOp::Store,
             },
         },
         _ => wgpu::RenderPassColorAttachment {
@@ -26,7 +26,7 @@ pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
             resolve_target: Some(&view),
             ops: wgpu::Operations {
                 load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                store: false,
+                store: wgpu::StoreOp::Discard,
             },
         },
     };
@@ -63,10 +63,12 @@ pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
                 view: &wobj.depth_texture.view,
                 depth_ops: Some(wgpu::Operations {
                     load: wgpu::LoadOp::Clear(1.0),
-                    store: true,
+                    store: wgpu::StoreOp::Store,
                 }),
                 stencil_ops: None,
             }),
+            timestamp_writes: None,
+            occlusion_query_set: None,
         });
 
         render_pass.execute_bundles(std::iter::once(&wobj.msaa_bundle));

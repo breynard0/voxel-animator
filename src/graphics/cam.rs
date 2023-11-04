@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use cgmath::{EuclideanSpace, Matrix};
+use cgmath::Matrix;
 use wgpu::util::DeviceExt;
 
 use crate::utils::{consts::*, log};

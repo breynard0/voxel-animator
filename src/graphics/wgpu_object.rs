@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use winit::window::Window;
+use winit::{keyboard::KeyCode, window::Window};
 
 use crate::utils::{
     cgv3_to_gv3,
@@ -126,7 +126,7 @@ impl WgpuObject {
 
         super::msaa::rebuild_msaa(self);
 
-        if input::is_key_pressed(winit::event::VirtualKeyCode::F1) {
+        if input::is_key_pressed(KeyCode::F1) {
             self.wireframe = !self.wireframe;
             let vib = vertex::create_buffers(&self.device, self.wireframe);
             self.index_buffer = vib.idxbuf;

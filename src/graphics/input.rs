@@ -1,6 +1,7 @@
 use winit::{
     dpi::{PhysicalPosition, PhysicalSize},
-    event::{ElementState, MouseScrollDelta, VirtualKeyCode},
+    event::{ElementState, MouseScrollDelta},
+    keyboard::KeyCode,
 };
 
 use crate::utils::log;
@@ -14,8 +15,8 @@ pub enum InputMouseButton {
 
 // I know this looks terrible, but I promise it's safe
 
-static mut KEY_STATE: Vec<VirtualKeyCode> = vec![];
-static mut LAST_KEY_STATE: Vec<VirtualKeyCode> = vec![];
+static mut KEY_STATE: Vec<KeyCode> = vec![];
+static mut LAST_KEY_STATE: Vec<KeyCode> = vec![];
 
 static mut MOUSE_STATE: Vec<InputMouseButton> = vec![];
 static mut LAST_MOUSE_STATE: Vec<InputMouseButton> = vec![];
@@ -28,11 +29,14 @@ static mut MOUSE_SCROLL_LAST: f32 = 0.0;
 static mut SHIFT_DOWN: bool = false;
 static mut CTRL_DOWN: bool = false;
 static mut ALT_DOWN: bool = false;
-pub fn poll_keyboard_event(event: &winit::event::KeyboardInput) {
-    let key = match event.virtual_keycode {
-        Some(k) => k,
-        None => {
-            log::log("Unable to parse key", log::LogLevel::WARNING);
+pub fn poll_keyboard_event(event: &winit::event::KeyEvent) {
+    let key = match event.physical_key {
+        winit::keyboard::PhysicalKey::Code(k) => k,
+        winit::keyboard::PhysicalKey::Unidentified(k) => {
+            log::log(
+                format!("Unable to parse key with code {:?}", k),
+                log::LogLevel::WARNING,
+            );
             return;
         }
     };
@@ -58,9 +62,11 @@ pub fn poll_mousebutton_event(event: &winit::event::MouseButton, state: &Element
         winit::event::MouseButton::Left => mousebutton_ops(InputMouseButton::Left, state),
         winit::event::MouseButton::Right => mousebutton_ops(InputMouseButton::Right, state),
         winit::event::MouseButton::Middle => mousebutton_ops(InputMouseButton::Middle, state),
+        winit::event::MouseButton::Back => todo!(),
+        winit::event::MouseButton::Forward => todo!(),
         winit::event::MouseButton::Other(_) => {
             log::log(
-                "Auxiliary mouse buttons are currently unsupported",
+                "Certain mouse buttons are currently unsupported",
                 log::LogLevel::WARNING,
             );
         }
@@ -113,7 +119,7 @@ fn mousebutton_ops(button: InputMouseButton, state: &ElementState) {
     unsafe { MOUSE_STATE = mousestate }
 }
 
-pub fn is_key_down(key: VirtualKeyCode) -> bool {
+pub fn is_key_down(key: KeyCode) -> bool {
     unsafe { KEY_STATE.contains(&key) }
 }
 
@@ -121,11 +127,11 @@ pub fn is_mouse_button_down(button: InputMouseButton) -> bool {
     unsafe { MOUSE_STATE.contains(&button) }
 }
 
-pub fn is_key_pressed(key: VirtualKeyCode) -> bool {
+pub fn is_key_pressed(key: KeyCode) -> bool {
     unsafe { !LAST_KEY_STATE.contains(&key) && KEY_STATE.contains(&key) }
 }
 
-pub fn is_key_released(key: VirtualKeyCode) -> bool {
+pub fn is_key_released(key: KeyCode) -> bool {
     unsafe { LAST_KEY_STATE.contains(&key) && !KEY_STATE.contains(&key) }
 }
 

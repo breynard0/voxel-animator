@@ -12,6 +12,11 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         backends: Backends::all(),
         dx12_shader_compiler: wgpu::Dx12Compiler::Fxc,
+        #[cfg(debug_assertions)]
+        flags: wgpu::InstanceFlags::DEBUG | wgpu::InstanceFlags::VALIDATION,
+        #[cfg(not(debug_assertions))]
+        flags: wgpu::InstanceFlags::empty(),
+        gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
     });
 
     let surface = unsafe {
