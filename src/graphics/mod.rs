@@ -9,7 +9,7 @@ pub mod transform;
 pub mod vertex;
 pub mod wgpu_object;
 
-use winit::{event::*, event_loop::EventLoop, keyboard::ModifiersKeyState, window::WindowBuilder};
+use winit::{event::*, event_loop::EventLoop, window::WindowBuilder};
 
 use crate::utils::log::log;
 pub async fn run() {
@@ -50,13 +50,6 @@ pub async fn run() {
                 }
             }
             WindowEvent::KeyboardInput { event, .. } => input::poll_keyboard_event(event),
-            WindowEvent::ModifiersChanged(m) => input::poll_modifiers(
-                modifier_state_to_bool(m.lshift_state())
-                    || modifier_state_to_bool(m.rshift_state()),
-                modifier_state_to_bool(m.lcontrol_state())
-                    || modifier_state_to_bool(m.rcontrol_state()),
-                modifier_state_to_bool(m.lalt_state()) || modifier_state_to_bool(m.ralt_state()),
-            ),
             WindowEvent::MouseInput { button, state, .. } => {
                 input::poll_mousebutton_event(button, state)
             }
@@ -77,14 +70,7 @@ pub async fn run() {
         }
         _ => {}
     }) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => log(e.to_string(), crate::utils::log::LogLevel::FATAL),
-    }
-}
-
-fn modifier_state_to_bool(m: ModifiersKeyState) -> bool {
-    match m {
-        ModifiersKeyState::Pressed => true,
-        ModifiersKeyState::Unknown => false,
     }
 }

@@ -29,6 +29,7 @@ static mut MOUSE_SCROLL_LAST: f32 = 0.0;
 static mut SHIFT_DOWN: bool = false;
 static mut CTRL_DOWN: bool = false;
 static mut ALT_DOWN: bool = false;
+
 pub fn poll_keyboard_event(event: &winit::event::KeyEvent) {
     let key = match event.physical_key {
         winit::keyboard::PhysicalKey::Code(k) => k,
@@ -41,6 +42,48 @@ pub fn poll_keyboard_event(event: &winit::event::KeyEvent) {
         }
     };
 
+    // Check for modifiers
+    let mut alt_down = false;
+    if let winit::keyboard::KeyCode::AltLeft = key {
+        alt_down = true;
+    }
+    if let winit::keyboard::KeyCode::AltRight = key {
+        alt_down = true;
+    }
+    unsafe {
+        ALT_DOWN = match alt_down {
+            true => event.state.is_pressed(),
+            false => ALT_DOWN,
+        }
+    }
+
+    let mut ctrl_down = false;
+    if let winit::keyboard::KeyCode::ControlLeft = key {
+            ctrl_down = true;
+    }
+    if let winit::keyboard::KeyCode::ControlRight = key {
+            ctrl_down = true;
+    }
+    unsafe {
+        CTRL_DOWN = match ctrl_down {
+            true => event.state.is_pressed(),
+            false => CTRL_DOWN,
+        };
+    }
+    let mut shift_down = false;
+    if let winit::keyboard::KeyCode::ShiftLeft = key {
+            shift_down = true;
+    }
+    if let winit::keyboard::KeyCode::ShiftRight = key {
+            shift_down = true;
+    }
+
+    unsafe {
+        SHIFT_DOWN = match shift_down {
+            true => event.state.is_pressed(),
+            false => SHIFT_DOWN,
+        };
+    }
     unsafe {
         match event.state {
             ElementState::Pressed => {
@@ -83,14 +126,6 @@ pub fn poll_scroll_wheel(delta: &MouseScrollDelta) {
             MouseScrollDelta::LineDelta(_, y) => *y,
             MouseScrollDelta::PixelDelta(x) => x.y as f32,
         }
-    }
-}
-
-pub fn poll_modifiers(shift: bool, ctrl: bool, alt: bool) {
-    unsafe {
-        SHIFT_DOWN = shift;
-        CTRL_DOWN = ctrl;
-        ALT_DOWN = alt;
     }
 }
 

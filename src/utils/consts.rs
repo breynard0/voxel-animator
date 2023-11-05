@@ -18,6 +18,8 @@ pub const ROT_SENS_Y: f32 = 1500.0;
 
 pub const ROT_SENS_THROTTLE: f32 = 0.2;
 
+pub const ROT_CLAMP: f32 = (std::f32::consts::PI / 2.0) * 0.999;
+
 pub const PAN_SENS: f32 = 100.0;
 
 pub const PAN_SENS_THROTTLE: f32 = 0.2;

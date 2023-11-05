@@ -4,7 +4,7 @@ use winit::{keyboard::KeyCode, window::Window};
 
 use crate::utils::{
     cgv3_to_gv3,
-    consts::{ROT_SENS_X, ROT_SENS_Y},
+    consts::{ROT_SENS_X, ROT_SENS_Y, ROT_CLAMP},
 };
 
 use super::{cam, init, input, transform, vertex};
@@ -82,31 +82,33 @@ impl WgpuObject {
 
                     let x = x
                         * ROT_SENS_X
-                        * throttle_factor
-                        * (!self.cam_temp.cam_flipped as u8 as f32 * 2.0 - 1.0);
+                        * throttle_factor;
 
                     let y = y * ROT_SENS_Y * throttle_factor;
 
-                    self.cam_rotation.y += y;
+                    self.cam_rotation.y = (self.cam_rotation.y + y).clamp(-ROT_CLAMP, ROT_CLAMP);
+
+                    // This code was used with a system that could go upside down. It didn't feel and behave quite right though, 
+                    // so it has been removed until further notice
 
                     // Roll over when gets to end of range
-                    if self.cam_rotation.y > PI {
-                        self.cam_rotation.y = -PI;
-                    }
+                    // if self.cam_rotation.y > PI {
+                    //     self.cam_rotation.y = -PI;
+                    // }
 
-                    if self.cam_rotation.y < -PI {
-                        self.cam_rotation.y = PI;
-                    }
+                    // if self.cam_rotation.y < -PI {
+                    //     self.cam_rotation.y = PI;
+                    // }
 
-                    self.cam_rotation.x += x;
+                    self.cam_rotation.x = (self.cam_rotation.x + x) % (2.0 * PI);
 
-                    if self.cam_rotation.x > PI {
-                        self.cam_rotation.x = -PI;
-                    }
+                    // if self.cam_rotation.x > PI {
+                    //     self.cam_rotation.x = -PI;
+                    // }
 
-                    if self.cam_rotation.x < -PI {
-                        self.cam_rotation.x = PI;
-                    }
+                    // if self.cam_rotation.x < -PI {
+                    //     self.cam_rotation.x = PI;
+                    // }
                 }
             }
 
