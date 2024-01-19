@@ -1,24 +1,25 @@
+use encase::ShaderType;
 use glam::{mat4, vec4};
 use wgpu::util::DeviceExt;
 
-use crate::utils::consts;
+use crate::utils::{self, consts};
 
 use super::{vertex, wgpu_object::WgpuObject};
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug, Copy, Clone, ShaderType)]
 pub struct TransformUniform {
     pub zoom: f32,
     zoom_factor: f32,
-    pub offset: [f32; 2],
+    pub pan: glam::Vec3,
 }
 
 impl Default for TransformUniform {
     fn default() -> Self {
         Self {
             zoom: -5.0,
-            offset: Default::default(),
             zoom_factor: 0.0,
+            pan: glam::Vec3::ZERO,
         }
     }
 }
@@ -26,10 +27,12 @@ impl Default for TransformUniform {
 impl TransformUniform {
     pub fn create_staging_buffer(self, device: &wgpu::Device) -> wgpu::Buffer {
         let mut uniform = self;
+
         uniform.zoom_factor = (1.0 + consts::ZOOM_SENS).powf(self.zoom);
+
         device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Tranform Staging Buffer"),
-            contents: bytemuck::cast_slice(&[uniform]),
+            contents: &utils::uniform_buffer_to_bytes(uniform),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_SRC,
         })
     }

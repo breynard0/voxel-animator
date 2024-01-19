@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use cgmath::Matrix;
 use wgpu::util::DeviceExt;
 
-use crate::utils::{consts::*, log};
+use crate::utils::consts::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Camera {
@@ -56,7 +56,7 @@ impl Camera {
         })
     }
 
-    pub fn apply_transforms(&mut self, rot: &glam::Vec3, pos: &glam::Vec3) {
+    pub fn apply_transforms(&mut self, rot: &glam::Vec3) {
         let rot = rot;
 
         let rotation = cgmath::point3(
@@ -65,14 +65,7 @@ impl Camera {
             (-rot.x).cos() * (rot.y).cos(),
         );
 
-        self.eye = rotation + cgmath::vec3(pos.x, pos.y, pos.z);
-        self.target = cgmath::point3(pos.x, pos.y, pos.z);
-
-        log::log_seperated(
-            vec![self.eye.x, self.eye.y, self.eye.z],
-            log::LogLevel::INFO,
-            8,
-        );
+        self.eye = rotation;
 
         self.rebuild_up(rot.y);
     }

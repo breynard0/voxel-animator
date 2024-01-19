@@ -59,10 +59,10 @@ pub fn poll_keyboard_event(event: &winit::event::KeyEvent) {
 
     let mut ctrl_down = false;
     if let winit::keyboard::KeyCode::ControlLeft = key {
-            ctrl_down = true;
+        ctrl_down = true;
     }
     if let winit::keyboard::KeyCode::ControlRight = key {
-            ctrl_down = true;
+        ctrl_down = true;
     }
     unsafe {
         CTRL_DOWN = match ctrl_down {
@@ -72,10 +72,10 @@ pub fn poll_keyboard_event(event: &winit::event::KeyEvent) {
     }
     let mut shift_down = false;
     if let winit::keyboard::KeyCode::ShiftLeft = key {
-            shift_down = true;
+        shift_down = true;
     }
     if let winit::keyboard::KeyCode::ShiftRight = key {
-            shift_down = true;
+        shift_down = true;
     }
 
     unsafe {

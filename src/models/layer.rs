@@ -38,7 +38,7 @@ impl Layer {
         }
 
         Layer {
-            label: self.label.clone(),
+            label: self.label,
             value: out,
         }
     }

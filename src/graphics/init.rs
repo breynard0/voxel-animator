@@ -6,9 +6,9 @@ use super::{
     wgpu_object::WgpuObject,
 };
 
-use crate::utils::consts::*;
+use crate::utils::{self, consts::*};
 
-pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
+pub async fn gfx_init(window: &winit::window::Window) -> WgpuObject {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         backends: Backends::all(),
         dx12_shader_compiler: wgpu::Dx12Compiler::Fxc,
@@ -19,11 +19,9 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
     });
 
-    let surface = unsafe {
-        instance
-            .create_surface(&window)
-            .expect("Failed to create surface")
-    };
+    let surface = instance
+        .create_surface(window)
+        .expect("Failed to create surface");
 
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
@@ -38,8 +36,8 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         .request_device(
             &wgpu::DeviceDescriptor {
                 label: Some("render_device"),
-                features: adapter.features(),
-                limits: Limits::downlevel_defaults(),
+                required_features: adapter.features(),
+                required_limits: Limits::downlevel_defaults(),
             },
             None,
         )
@@ -65,6 +63,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         present_mode: wgpu::PresentMode::Fifo,
         alpha_mode: surface_caps.alpha_modes[0],
         view_formats: vec![surface_format],
+        desired_maximum_frame_latency: 2,
     };
 
     surface.configure(&device, &config);
@@ -105,7 +104,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
     let transform_uniform = transform::TransformUniform::default();
     let transform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("transform Buffer"),
-        contents: bytemuck::cast_slice(&[transform_uniform]),
+        contents: &utils::uniform_buffer_to_bytes(transform_uniform),
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
     let transform_staging_buf = transform_uniform.create_staging_buffer(&device);
@@ -184,7 +183,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         queue,
         config,
         size,
-        window,
+        window: window,
         pipeline: render_pipeline,
         pipeline_layout: render_pipeline_layout,
         shader,
@@ -199,6 +198,7 @@ pub async fn gfx_init(window: winit::window::Window) -> WgpuObject {
         transform_uniform,
         transform_buf: transform_buffer,
         transform_staging_buf: Some(transform_staging_buf),
+        restage_transform: false,
         uniform_bind_group,
         msaa_buffer,
         msaa_bundle,

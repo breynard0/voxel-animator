@@ -4,18 +4,18 @@ use winit::{keyboard::KeyCode, window::Window};
 
 use crate::utils::{
     cgv3_to_gv3,
-    consts::{ROT_SENS_X, ROT_SENS_Y, ROT_CLAMP},
+    consts::{ROT_CLAMP, ROT_SENS_X, ROT_SENS_Y},
 };
 
 use super::{cam, init, input, transform, vertex};
 
-pub struct WgpuObject {
-    pub surface: wgpu::Surface,
+pub struct WgpuObject<'a> {
+    pub surface: wgpu::Surface<'a>,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
-    pub window: Window,
+    pub window: &'a Window,
     pub pipeline: wgpu::RenderPipeline,
     pub pipeline_layout: wgpu::PipelineLayout,
     pub shader: wgpu::ShaderModule,
@@ -29,6 +29,7 @@ pub struct WgpuObject {
     pub cam_staging_buf: Option<wgpu::Buffer>,
     pub transform_uniform: transform::TransformUniform,
     pub transform_buf: wgpu::Buffer,
+    pub restage_transform: bool,
     pub transform_staging_buf: Option<wgpu::Buffer>,
     pub uniform_bind_group: wgpu::BindGroup,
     pub msaa_buffer: wgpu::TextureView,
@@ -41,7 +42,7 @@ pub struct WgpuObject {
     pub delta_time: f32,
 }
 
-impl WgpuObject {
+impl WgpuObject<'_> {
     pub const SAMPLE_COUNT: u32 = 8;
 
     pub fn window(&self) -> &Window {
@@ -72,6 +73,10 @@ impl WgpuObject {
                     // self.cam.rebuild_up(self.cam_rotation.y);
                     let translation = self.cam.get_right() * x + cgv3_to_gv3(self.cam.up * y);
                     self.cam_pos += glam::vec3(translation.x, translation.y, translation.z);
+
+                    // Send data to GPU
+                    self.transform_uniform.pan = self.cam_pos.into();
+                    self.restage_transform = true;
                 }
                 // Orbit
                 false => {
@@ -80,39 +85,17 @@ impl WgpuObject {
                         false => 1.0,
                     };
 
-                    let x = x
-                        * ROT_SENS_X
-                        * throttle_factor;
+                    let x = x * ROT_SENS_X * throttle_factor;
 
                     let y = y * ROT_SENS_Y * throttle_factor;
 
                     self.cam_rotation.y = (self.cam_rotation.y + y).clamp(-ROT_CLAMP, ROT_CLAMP);
 
-                    // This code was used with a system that could go upside down. It didn't feel and behave quite right though, 
-                    // so it has been removed until further notice
-
-                    // Roll over when gets to end of range
-                    // if self.cam_rotation.y > PI {
-                    //     self.cam_rotation.y = -PI;
-                    // }
-
-                    // if self.cam_rotation.y < -PI {
-                    //     self.cam_rotation.y = PI;
-                    // }
-
                     self.cam_rotation.x = (self.cam_rotation.x + x) % (2.0 * PI);
-
-                    // if self.cam_rotation.x > PI {
-                    //     self.cam_rotation.x = -PI;
-                    // }
-
-                    // if self.cam_rotation.x < -PI {
-                    //     self.cam_rotation.x = PI;
-                    // }
                 }
             }
 
-            self.cam.apply_transforms(&self.cam_rotation, &self.cam_pos);
+            self.cam.apply_transforms(&self.cam_rotation);
             self.cam_staging_buf = Some(self.cam.create_staging_buffer(&self.device));
             self.cam_temp.button_held_last_frame = true;
         } else {
@@ -122,8 +105,7 @@ impl WgpuObject {
         let prezoom = self.transform_uniform.zoom;
         self.transform_uniform.zoom += input::get_scroll_delta();
         if self.transform_uniform.zoom != prezoom {
-            self.transform_staging_buf =
-                Some(self.transform_uniform.create_staging_buffer(&self.device));
+            self.restage_transform = true;
         }
 
         super::msaa::rebuild_msaa(self);
@@ -140,6 +122,12 @@ impl WgpuObject {
                 &self.config,
                 self.wireframe,
             );
+        }
+
+        if self.restage_transform {
+            self.transform_staging_buf =
+                Some(self.transform_uniform.create_staging_buffer(&self.device));
+            self.restage_transform = false;
         }
 
         input::input_update();

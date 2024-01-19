@@ -23,7 +23,7 @@ pub async fn run() {
         .unwrap();
     let window_id = window.id();
 
-    let mut wgpu_obj = init::gfx_init(window).await;
+    let mut wgpu_obj = init::gfx_init(&window).await;
 
     let mut last_frame = std::time::Instant::now();
 

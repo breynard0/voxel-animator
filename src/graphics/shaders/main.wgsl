@@ -5,12 +5,9 @@ struct CameraUniform {
 var<uniform> camera: CameraUniform;
 
 struct TransformUniform {
-    // rot_mat_x: mat4x4<f32>,
-    // rot_mat_y: mat4x4<f32>,
-    // rot_mat_z: mat4x4<f32>,
     zoom: f32,
     zoom_factor: f32,
-    offset: vec2<f32>,
+    pan: vec3<f32>,
 }
 @group(0) @binding(1)
 var<uniform> transform: TransformUniform;
@@ -23,7 +20,7 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) @interpolate(flat) color: vec4<f32>,
+    @location(0) @interpolate(perspective) color: vec4<f32>,
 };
 
 @vertex
@@ -31,9 +28,13 @@ fn vs_main(
     model: VertexInput,
 ) -> VertexOutput {
     var out: VertexOutput;
+
+    // out.clip_position = camera.view_proj * vec4<f32>(model.position * transform.zoom_factor, 1.0);
+    out.clip_position = camera.view_proj * vec4<f32>(model.position * transform.zoom_factor + transform.pan, 1.0);
+    let sun_dir = normalize(vec3<f32>(1.0, -1.0, 1.0));
+    var factor = dot(normalize(model.normal), -sun_dir);
     
-    out.clip_position = camera.view_proj * vec4<f32>(model.position * transform.zoom_factor, 1.0);
-    out.color = model.color;
+    out.color = model.color * factor;
     return out;
 }
 

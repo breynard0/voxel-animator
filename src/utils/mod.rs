@@ -99,3 +99,13 @@ pub fn cgv3_to_gv3(input: cgmath::Vector3<f32>) -> glam::Vec3 {
         z: input.z,
     }
 }
+
+pub fn uniform_buffer_to_bytes<U>(uniform: U) -> Vec<u8>
+where
+    U: encase::ShaderType + encase::internal::WriteInto,
+{
+    let mut buffer = encase::UniformBuffer::new(Vec::new());
+    buffer.write(&uniform).unwrap();
+    let byte_buffer = buffer.into_inner();
+    byte_buffer
+}
