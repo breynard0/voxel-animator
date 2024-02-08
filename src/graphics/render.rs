@@ -1,6 +1,6 @@
 use wgpu::SurfaceError;
 
-use super::wgpu_object::WgpuObject;
+use super::{lines, wgpu_object::WgpuObject};
 
 pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
     let output = wobj.surface.get_current_texture()?;
@@ -55,10 +55,11 @@ pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
     }
     wobj.transform_staging_buf = None;
 
+    // Main Render Pass
     {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("RenderPass"),
-            color_attachments: &[Some(color_attachment)],
+            label: Some("MainRenderPass"),
+            color_attachments: &[Some(color_attachment.clone())],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                 view: &wobj.depth_texture.view,
                 depth_ops: Some(wgpu::Operations {
@@ -78,6 +79,45 @@ pub fn render(wobj: &mut WgpuObject) -> Result<(), SurfaceError> {
         render_pass.set_vertex_buffer(0, wobj.vertex_buffer.slice(..));
         render_pass.set_index_buffer(wobj.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..wobj.index_buffer_size, 0, 0..1);
+    }
+
+    // Foreground Lines Render Pass
+
+    // Regenerate buffers if changed
+    if wobj.line_rendering.fg.changed() {
+        wobj.line_rendering.fg.generate_buffers(&wobj.device);
+    }
+    if wobj.line_rendering.bg.changed() {
+        wobj.line_rendering.bg.generate_buffers(&wobj.device);
+    }
+
+    {
+        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("FGLinesRenderPass"),
+            color_attachments: &[Some(color_attachment.clone())],
+            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                view: &wobj.depth_texture.view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: wgpu::StoreOp::Store,
+                }),
+                stencil_ops: None,
+            }),
+            timestamp_writes: None,
+            occlusion_query_set: None,
+        });
+
+        render_pass.execute_bundles(std::iter::once(&wobj.msaa_bundle));
+
+        render_pass.set_pipeline(&wobj.line_rendering.fg.pipeline);
+        render_pass.set_bind_group(0, &wobj.uniform_bind_group, &[]);
+        render_pass.set_vertex_buffer(0, wobj.line_rendering.fg.vertex_buffer.slice(..));
+        render_pass.set_index_buffer(
+            wobj.line_rendering.fg.index_buffer.slice(..),
+            wgpu::IndexFormat::Uint32,
+        );
+        
+        render_pass.draw_indexed(0..wobj.line_rendering.fg.index_buffer_size, 0, 0..1);
     }
 
     wobj.queue.submit(std::iter::once(encoder.finish()));

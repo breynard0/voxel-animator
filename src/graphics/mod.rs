@@ -2,6 +2,7 @@ pub mod cam;
 pub mod depth;
 pub mod init;
 pub mod input;
+pub mod lines;
 pub mod msaa;
 pub mod render;
 pub mod texture;

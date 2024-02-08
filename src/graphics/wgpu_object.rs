@@ -2,12 +2,15 @@ use std::f32::consts::PI;
 
 use winit::{keyboard::KeyCode, window::Window};
 
-use crate::utils::{
-    cgv3_to_gv3,
-    consts::{ROT_CLAMP, ROT_SENS_X, ROT_SENS_Y},
+use crate::{
+    models::{model, regen},
+    utils::{
+        cgv3_to_gv3,
+        consts::{ROT_CLAMP, ROT_SENS_X, ROT_SENS_Y},
+    },
 };
 
-use super::{cam, init, input, transform, vertex};
+use super::{cam, init, input, lines, transform, vertex};
 
 pub struct WgpuObject<'a> {
     pub surface: wgpu::Surface<'a>,
@@ -40,6 +43,7 @@ pub struct WgpuObject<'a> {
     pub cam_pos: glam::Vec3,
     pub cam_temp: cam::CamTemp,
     pub delta_time: f32,
+    pub line_rendering: lines::LineRendering,
 }
 
 impl WgpuObject<'_> {
@@ -110,9 +114,24 @@ impl WgpuObject<'_> {
 
         super::msaa::rebuild_msaa(self);
 
+        // Draw normals - will remove later, for debugging
+        self.line_rendering.clear_lines_fg();
+        for x in regen::gen_vert_idx(&model::get_model()).0 {
+            self.line_rendering.draw_line_fg(
+                x.pos.into(),
+                glam::Vec3::from_array(x.pos) + glam::Vec3::from_array(x.normal),
+                [0.0, 1.0, 0.0, 1.0],
+            );
+        }
+
+        // Wireframe
         if input::is_key_pressed(KeyCode::F1) {
             self.wireframe = !self.wireframe;
-            let vib = vertex::create_buffers(&self.device, self.wireframe);
+            let vib = vertex::create_buffers(
+                regen::gen_vert_idx(&model::get_model()),
+                &self.device,
+                self.wireframe,
+            );
             self.index_buffer = vib.idxbuf;
             self.index_buffer_size = vib.idx_size;
             self.pipeline = init::create_render_pipeline(

@@ -1,12 +1,15 @@
 use wgpu::{util::DeviceExt, Backends, FragmentState, Limits, TextureFormat, VertexState};
 
 use super::{
-    cam, msaa, transform,
+    cam, lines, msaa, transform,
     vertex::{self},
     wgpu_object::WgpuObject,
 };
 
-use crate::utils::{self, consts::*};
+use crate::{
+    models::{model, regen},
+    utils::{self, consts::*, log},
+};
 
 pub async fn gfx_init(window: &winit::window::Window) -> WgpuObject {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -72,7 +75,8 @@ pub async fn gfx_init(window: &winit::window::Window) -> WgpuObject {
 
     let shader = device.create_shader_module(wgpu::include_wgsl!("./shaders/main.wgsl"));
 
-    let vertex_index_buffer = vertex::create_buffers(&device, wireframe);
+    let vertex_index_buffer =
+        vertex::create_buffers(regen::gen_vert_idx(&model::get_model()), &device, wireframe);
 
     let rotation = glam::Vec3::ZERO;
 
@@ -177,6 +181,8 @@ pub async fn gfx_init(window: &winit::window::Window) -> WgpuObject {
         vertex_index_buffer.idx_size,
     );
 
+    let line_rendering = lines::LineRendering::new(&device, &config, &uniform_bind_group_layout);
+
     let mut out = WgpuObject {
         surface,
         device,
@@ -208,6 +214,7 @@ pub async fn gfx_init(window: &winit::window::Window) -> WgpuObject {
         cam_rotation: rotation,
         cam_pos: glam::Vec3::ZERO,
         cam_temp: Default::default(),
+        line_rendering,
     };
 
     out.update();

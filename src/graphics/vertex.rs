@@ -47,9 +47,11 @@ pub fn vertex_buffer_layout() -> wgpu::VertexBufferLayout<'static> {
     vertex_buffer_layout
 }
 
-pub fn create_buffers(device: &wgpu::Device, wireframe: bool) -> BufferOutput {
-    let model = regen::gen_vert_idx(&model::get_model());
-
+pub fn create_buffers(
+    model: (Vec<Vertex>, Vec<u32>),
+    device: &wgpu::Device,
+    wireframe: bool,
+) -> BufferOutput {
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("VertexBuffer"),
         contents: bytemuck::cast_slice(&model.0),

@@ -20,22 +20,18 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) @interpolate(perspective) color: vec4<f32>,
+    @location(0) color: vec4<f32>,
 };
 
 @vertex
 fn vs_main(
-    model: VertexInput,
+    model: VertexInput
 ) -> VertexOutput {
     var out: VertexOutput;
 
-    // out.clip_position = camera.view_proj * vec4<f32>(model.position * transform.zoom_factor, 1.0);
     out.clip_position = camera.view_proj * vec4<f32>(model.position * transform.zoom_factor + transform.pan, 1.0);
-    let sun_dir = normalize(vec3<f32>(1.0, -1.0, 1.0));
-    // var factor = dot(normalize(model.normal), -sun_dir);
-    var factor = 1.0;
-    
-    out.color = model.color * factor;
+    // out.clip_position = vec4<f32>(model.position, 1.0);
+    out.color = model.color;
     return out;
 }
 

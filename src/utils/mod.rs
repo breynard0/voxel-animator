@@ -109,3 +109,12 @@ where
     let byte_buffer = buffer.into_inner();
     byte_buffer
 }
+
+pub fn empty_buffer(device: &wgpu::Device) -> wgpu::Buffer {
+    device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("undefined buffer"),
+        size: 0,
+        usage: wgpu::BufferUsages::STORAGE,
+        mapped_at_creation: false,
+    })
+}
